@@ -13,6 +13,7 @@ import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.core.Launch;
 import org.eclipse.debug.core.model.IThread;
+import org.eclipse.debug.ui.IDebugModelPresentation;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.debug.core.IJavaDebugTarget;
@@ -32,6 +33,7 @@ public class DebuggerMagic {
 
 	private IJavaProject myJavaProject;
 	private Launch launch;
+	private IDebugModelPresentation fPresentation;
 
 	public DebuggerMagic() {
 		try {
@@ -110,12 +112,14 @@ public class DebuggerMagic {
 		// Evaluate an expression
 		eval.evaluate(expression, top, new IEvaluationListener() {
 			@Override
-			public void evaluationComplete(IEvaluationResult result) {
+			public void evaluationComplete(final IEvaluationResult result) {
 				try {
 					new PrintStream(out).println(result.getValue().getValueString());
-				} catch (DebugException e) {
-					throw new RuntimeException(e);
+				} catch (DebugException exception) {
+					throw new BullshitFree(exception);
 				}
+
+				// evaluationResultToString(result, out);
 			}
 		}, DebugEvent.EVALUATION, false);
 	}
