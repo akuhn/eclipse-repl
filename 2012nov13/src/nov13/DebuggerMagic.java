@@ -46,8 +46,7 @@ public class DebuggerMagic {
 
 	private void initializeMagic() throws Exception {
 
-		IProject p = ResourcesPlugin.getWorkspace().getRoot().getProject("example");
-		myJavaProject = JavaCore.create(p);
+		myJavaProject = getExampleProject();
 
 		IVMInstall vmInstall = JavaRuntime.getVMInstall(myJavaProject);
 		if (vmInstall == null) vmInstall = JavaRuntime.getDefaultVMInstall();
@@ -75,6 +74,13 @@ public class DebuggerMagic {
 				}
 			}
 		}
+	}
+
+	private IJavaProject getExampleProject() {
+		for (IProject p: ResourcesPlugin.getWorkspace().getRoot().getProjects()) {
+			if (p.getName().equals("example")) return JavaCore.create(p);
+		}
+		throw new RuntimeException("Did not find 'example' project with com.example.Example#main method!");
 	}
 
 	private IJavaMethodBreakpoint createMagicBreakpoint() throws CoreException {
