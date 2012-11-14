@@ -1,8 +1,5 @@
 package nov13;
 
-import java.io.OutputStream;
-import java.io.PrintStream;
-
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -12,9 +9,6 @@ import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.IDebugEventFilter;
 import org.eclipse.debug.core.model.ITerminate;
-import org.eclipse.debug.core.model.IThread;
-import org.eclipse.debug.core.model.IValue;
-import org.eclipse.debug.ui.IValueDetailListener;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.debug.core.IEvaluationRunnable;
 import org.eclipse.jdt.debug.core.IJavaDebugTarget;
@@ -39,7 +33,6 @@ import org.eclipse.jdt.internal.debug.eval.ast.engine.IRuntimeContext;
 import org.eclipse.jdt.internal.debug.eval.ast.engine.Interpreter;
 import org.eclipse.jdt.internal.debug.eval.ast.engine.RuntimeContext;
 import org.eclipse.jdt.internal.debug.eval.ast.instructions.InstructionSequence;
-import org.eclipse.jdt.internal.debug.ui.JavaDetailFormattersManager;
 
 import com.sun.jdi.InvocationException;
 import com.sun.jdi.ObjectReference;
@@ -57,19 +50,8 @@ public class MyEvaluationEngine implements IEvaluationEngine {
 		this.eval = eval;
 	}
 
-	public void evaluateExpression(String snippet, final OutputStream out, final IJavaDebugTarget target,
-			IJavaStackFrame frame) throws DebugException {
-		IEvaluationListener listener = new IEvaluationListener() {
-			@Override
-			public void evaluationComplete(final IEvaluationResult result) {
-				try {
-					printEvaluationResult(result, target, out);
-				} catch (DebugException exception) {
-					throw new BullshitFree(exception);
-				}
-			}
-
-		};
+	public void evaluateExpression(String snippet, IJavaStackFrame frame, IEvaluationListener listener)
+			throws DebugException {
 		boolean hitBreakpoints = false;
 		int evaluationDetail = DebugEvent.EVALUATION;
 		ICompiledExpression expression = eval.getCompiledExpression(snippet, frame);
@@ -102,19 +84,6 @@ public class MyEvaluationEngine implements IEvaluationEngine {
 							EvaluationEngineMessages.ASTEvaluationEngine_AST_evaluation_engine_cannot_evaluate_expression,
 							null));
 		}
-	}
-
-	public void printEvaluationResult(final IEvaluationResult result, IJavaDebugTarget target, final OutputStream out)
-			throws DebugException {
-		IJavaValue value = result.getValue();
-		JavaDetailFormattersManager man = JavaDetailFormattersManager.getDefault();
-		IThread[] threads = target.getThreads();
-		man.computeValueDetail(value, (IJavaThread) threads[threads.length - 1], new IValueDetailListener() {
-			@Override
-			public void detailComputed(IValue value, String result) {
-				new PrintStream(out).println(result);
-			}
-		});
 	}
 
 	@Override
@@ -276,13 +245,6 @@ public class MyEvaluationEngine implements IEvaluationEngine {
 	 */
 	class EventFilter implements IDebugEventFilter {
 
-		/*
-		 * (non-Javadoc)
-		 * 
-		 * @see
-		 * org.eclipse.debug.core.IDebugEventFilter#filterDebugEvents(org.eclipse
-		 * .debug.core.DebugEvent[])
-		 */
 		public DebugEvent[] filterDebugEvents(DebugEvent[] events) {
 			if (events.length == 1) {
 				DebugEvent event = events[0];
