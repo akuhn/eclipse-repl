@@ -11,6 +11,7 @@ Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.jdt.core;bundle-version="3.8.2",
  org.eclipse.pde.ui;bundle-version="3.7.1",
  org.eclipse.jdt.debug.ui;bundle-version="3.5.1",
- org.eclipse.jdt.debug;bundle-version="3.7.101"
+ org.eclipse.jdt.debug;bundle-version="3.7.101",
+ org.eclipse.ui.console;bundle-version="3.5.100"
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
