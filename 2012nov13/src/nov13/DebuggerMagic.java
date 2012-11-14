@@ -8,22 +8,24 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.debug.core.DebugEvent;
 import org.eclipse.debug.core.DebugException;
-import org.eclipse.debug.core.DebugPlugin;
-import org.eclipse.debug.core.ILaunch;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.core.Launch;
 import org.eclipse.debug.core.model.IThread;
-import org.eclipse.debug.ui.IDebugModelPresentation;
+import org.eclipse.debug.core.model.IValue;
+import org.eclipse.debug.ui.IValueDetailListener;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.debug.core.IJavaDebugTarget;
 import org.eclipse.jdt.debug.core.IJavaMethodBreakpoint;
 import org.eclipse.jdt.debug.core.IJavaStackFrame;
+import org.eclipse.jdt.debug.core.IJavaThread;
+import org.eclipse.jdt.debug.core.IJavaValue;
 import org.eclipse.jdt.debug.core.JDIDebugModel;
 import org.eclipse.jdt.debug.eval.EvaluationManager;
 import org.eclipse.jdt.debug.eval.IAstEvaluationEngine;
 import org.eclipse.jdt.debug.eval.IEvaluationListener;
 import org.eclipse.jdt.debug.eval.IEvaluationResult;
+import org.eclipse.jdt.internal.debug.ui.JavaDetailFormattersManager;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.IVMRunner;
 import org.eclipse.jdt.launching.JavaRuntime;
@@ -33,7 +35,6 @@ public class DebuggerMagic {
 
 	private IJavaProject myJavaProject;
 	private Launch launch;
-	private IDebugModelPresentation fPresentation;
 
 	public DebuggerMagic() {
 		try {
@@ -84,16 +85,6 @@ public class DebuggerMagic {
 		return bp;
 	}
 
-	private static void moreStuff() throws Exception {
-		// Get sample Java project
-		IProject p = ResourcesPlugin.getWorkspace().getRoot().getProject("example");
-		IJavaProject project = JavaCore.create(p);
-		// Get sample launch (= debug session)
-		DebugPlugin debug = DebugPlugin.getDefault();
-		ILaunchManager launchManager = debug.getLaunchManager();
-		ILaunch launch = launchManager.getLaunches()[0];
-	}
-
 	public void evaluate(String expression, OutputStream out) {
 		try {
 			evaluateStuff(expression, out);
@@ -103,7 +94,7 @@ public class DebuggerMagic {
 	}
 
 	private void evaluateStuff(String expression, final OutputStream out) throws Exception {
-		IJavaDebugTarget target = (IJavaDebugTarget) launch.getDebugTarget();
+		final IJavaDebugTarget target = (IJavaDebugTarget) launch.getDebugTarget();
 		// Create interpreter
 		IAstEvaluationEngine eval = EvaluationManager.newAstEvaluationEngine(myJavaProject, target);
 		// Get sample stack frame
@@ -114,14 +105,28 @@ public class DebuggerMagic {
 			@Override
 			public void evaluationComplete(final IEvaluationResult result) {
 				try {
-					new PrintStream(out).println(result.getValue().getValueString());
+					printEvaluationResult(result, target, out);
 				} catch (DebugException exception) {
 					throw new BullshitFree(exception);
 				}
 
 				// evaluationResultToString(result, out);
 			}
+
 		}, DebugEvent.EVALUATION, false);
+	}
+
+	private void printEvaluationResult(final IEvaluationResult result, IJavaDebugTarget target, final OutputStream out)
+			throws DebugException {
+		IJavaValue value = result.getValue();
+		JavaDetailFormattersManager man = JavaDetailFormattersManager.getDefault();
+		IThread[] threads = target.getThreads();
+		man.computeValueDetail(value, (IJavaThread) threads[threads.length - 1], new IValueDetailListener() {
+			@Override
+			public void detailComputed(IValue value, String result) {
+				new PrintStream(out).println(result);
+			}
+		});
 	}
 
 }
