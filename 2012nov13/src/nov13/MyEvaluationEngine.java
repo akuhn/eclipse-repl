@@ -89,38 +89,7 @@ public class MyEvaluationEngine implements IEvaluationEngine {
 		EvaluationSourceGenerator mapper = null;
 		CompilationUnit unit = null;
 		try {
-			IJavaVariable[] localsVar = context.getLocals();
-			int numLocalsVar = localsVar.length;
-			Set<String> names = new HashSet<String>();
-			// ******
-			// to hide problems with local variable declare as instance of Local
-			// Types
-			// and to remove locals with duplicate names
-			Map<String, IVariable> vars = new HashMap();
-			IJavaVariable[] locals = new IJavaVariable[numLocalsVar];
-			int numLocals = 0;
-			for (int i = 0; i < numLocalsVar; i++) {
-				if (!isLocalType(localsVar[i].getSignature()) && !names.contains(localsVar[i].getName())) {
-					locals[numLocals++] = localsVar[i];
-					names.add(localsVar[i].getName());
-					vars.put(localsVar[i].getName(), localsVar[i]);
-				}
-			}
-			if (internalVariables != null) vars.putAll(internalVariables);
-			// to solve and remove
-			// ******
-
-			String[] localTypesNames = new String[vars.size()];
-			String[] localVariables = new String[vars.size()];
-			int i = 0;
-			for (String each: vars.keySet()) {
-				localVariables[i] = each;
-				localTypesNames[i] = Signature.toString(((IJavaVariable) vars.get(each)).getGenericSignature())
-						.replace('/', '.');
-				i++;
-			}
-
-			mapper = new EvaluationSourceGenerator(localTypesNames, localVariables, snippet);
+			mapper = ohBoyDontYouMissHigherOrderProgrammingInJava(snippet, context);
 			// Compile in context of declaring type to get proper visibility of
 			// locals and members.
 			// Compiling in context of receiving type potentially provides
@@ -145,6 +114,44 @@ public class MyEvaluationEngine implements IEvaluationEngine {
 		}
 
 		return createExpressionFromAST(snippet, mapper, unit);
+	}
+
+	private EvaluationSourceGenerator ohBoyDontYouMissHigherOrderProgrammingInJava(String snippet,
+			RuntimeContext context) throws CoreException, DebugException {
+		EvaluationSourceGenerator mapper;
+		IJavaVariable[] localsVar = context.getLocals();
+		int numLocalsVar = localsVar.length;
+		Set<String> names = new HashSet<String>();
+		// ******
+		// to hide problems with local variable declare as instance of Local
+		// Types
+		// and to remove locals with duplicate names
+		Map<String, IVariable> vars = new HashMap();
+		IJavaVariable[] locals = new IJavaVariable[numLocalsVar];
+		int numLocals = 0;
+		for (int i = 0; i < numLocalsVar; i++) {
+			if (!isLocalType(localsVar[i].getSignature()) && !names.contains(localsVar[i].getName())) {
+				locals[numLocals++] = localsVar[i];
+				names.add(localsVar[i].getName());
+				vars.put(localsVar[i].getName(), localsVar[i]);
+			}
+		}
+		if (internalVariables != null) vars.putAll(internalVariables);
+		// to solve and remove
+		// ******
+
+		String[] localTypesNames = new String[vars.size()];
+		String[] localVariables = new String[vars.size()];
+		int i = 0;
+		for (String each: vars.keySet()) {
+			localVariables[i] = each;
+			localTypesNames[i] = Signature.toString(((IJavaVariable) vars.get(each)).getGenericSignature())
+					.replace('/', '.');
+			i++;
+		}
+
+		mapper = new EvaluationSourceGenerator(localTypesNames, localVariables, snippet);
+		return mapper;
 	}
 
 	/**
