@@ -41,6 +41,7 @@ public class DebuggerMagic {
 	private static final String MAIN_CLASS_NAME = "com.example.Example";
 	private IJavaProject myJavaProject;
 	private Launch launch;
+	private MyEvaluationEngine eval;
 
 	public DebuggerMagic() {
 		try {
@@ -77,6 +78,10 @@ public class DebuggerMagic {
 					// it the same way.
 
 					launch.getDebugTarget().breakpointAdded(bp);
+
+					IJavaDebugTarget target = (IJavaDebugTarget) launch.getDebugTarget();
+					IAstEvaluationEngine eval0 = EvaluationManager.newAstEvaluationEngine(myJavaProject, target);
+					eval = new MyEvaluationEngine(eval0);
 				}
 			}
 		}
@@ -106,30 +111,32 @@ public class DebuggerMagic {
 	}
 
 	private void evaluateStuff(String expression, final OutputStream out) throws Exception {
-		final IJavaDebugTarget target = (IJavaDebugTarget) launch.getDebugTarget();
-		IAstEvaluationEngine eval = EvaluationManager.newAstEvaluationEngine(myJavaProject, target);
-		IThread[] threads = target.getThreads();
+		IThread[] threads = launch.getDebugTarget().getThreads();
 		// XXX Assuming that the last frame is suspended on our breakpoint.
 		IJavaStackFrame frame = (IJavaStackFrame) threads[threads.length - 1].getTopStackFrame();
 		IEvaluationListener callback = new IEvaluationListener() {
 			@Override
 			public void evaluationComplete(final IEvaluationResult result) {
 				try {
-					printEvaluationResult(result, target, out);
+					printEvaluationResult((MyEvaluationResult) result, out);
 				} catch (DebugException exception) {
 					throw new BullshitFree(exception);
 				}
 			}
 
 		};
-		new MyEvaluationEngine(eval).evaluateExpression(expression, frame, callback);
+		eval.evaluateExpression(expression, frame, callback);
 	}
 
-	public void printEvaluationResult(final IEvaluationResult result, IJavaDebugTarget target, final OutputStream out)
-			throws DebugException {
+	public void printEvaluationResult(final MyEvaluationResult result, final OutputStream out) throws DebugException {
+		for (String each: result.internalVariables.keySet()) {
+			new PrintStream(out).print(each);
+			new PrintStream(out).print("=");
+			new PrintStream(out).println(result.internalVariables.get(each).getValue().toString());
+		}
 		IJavaValue value = result.getValue();
 		JavaDetailFormattersManager man = JavaDetailFormattersManager.getDefault();
-		IThread[] threads = target.getThreads();
+		IThread[] threads = launch.getDebugTarget().getThreads();
 		man.computeValueDetail(value, (IJavaThread) threads[threads.length - 1], new IValueDetailListener() {
 			@Override
 			public void detailComputed(IValue value, String result) {
