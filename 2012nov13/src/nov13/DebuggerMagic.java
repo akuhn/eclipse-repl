@@ -128,21 +128,28 @@ public class DebuggerMagic {
 		eval.evaluateExpression(expression, frame, callback);
 	}
 
-	public void printEvaluationResult(final MyEvaluationResult result, final OutputStream out) throws DebugException {
-		for (String each: result.internalVariables.keySet()) {
-			new PrintStream(out).print(each);
-			new PrintStream(out).print("=");
-			new PrintStream(out).println(result.internalVariables.get(each).getValue().toString());
-		}
-		IJavaValue value = result.getValue();
-		JavaDetailFormattersManager man = JavaDetailFormattersManager.getDefault();
-		IThread[] threads = launch.getDebugTarget().getThreads();
-		man.computeValueDetail(value, (IJavaThread) threads[threads.length - 1], new IValueDetailListener() {
-			@Override
-			public void detailComputed(IValue value, String result) {
-				new PrintStream(out).println(result);
+	public void printEvaluationResult(MyEvaluationResult result, OutputStream os) throws DebugException {
+		final PrintStream out = new PrintStream(os);
+		if (result.hasErrors()) {
+			for (String each: result.getErrorMessages()) {
+				out.println(each);
 			}
-		});
+		} else {
+			for (String each: result.internalVariables.keySet()) {
+				out.print(each);
+				out.print("=");
+				out.println(result.internalVariables.get(each).getValue().toString());
+			}
+			IJavaValue value = result.getValue();
+			JavaDetailFormattersManager man = JavaDetailFormattersManager.getDefault();
+			IThread[] threads = launch.getDebugTarget().getThreads();
+			man.computeValueDetail(value, (IJavaThread) threads[threads.length - 1], new IValueDetailListener() {
+				@Override
+				public void detailComputed(IValue value, String result) {
+					out.println(result);
+				}
+			});
+		}
 	}
 
 }
