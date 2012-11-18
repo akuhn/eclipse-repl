@@ -1,5 +1,7 @@
 package nov13;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -30,7 +32,6 @@ import org.eclipse.jdt.debug.core.IJavaStackFrame;
 import org.eclipse.jdt.debug.core.IJavaThread;
 import org.eclipse.jdt.debug.core.IJavaValue;
 import org.eclipse.jdt.debug.core.IJavaVariable;
-import org.eclipse.jdt.debug.eval.IAstEvaluationEngine;
 import org.eclipse.jdt.debug.eval.ICompiledExpression;
 import org.eclipse.jdt.debug.eval.IEvaluationEngine;
 import org.eclipse.jdt.debug.eval.IEvaluationListener;
@@ -58,11 +59,13 @@ import com.sun.jdi.ObjectReference;
  */
 public class MyEvaluationEngine implements IEvaluationEngine {
 
-	private IAstEvaluationEngine eval;
 	private Map<String, IVariable> internalVariables;
+	private IJavaProject project;
+	private IJavaDebugTarget target;
 
-	public MyEvaluationEngine(IAstEvaluationEngine eval) {
-		this.eval = eval;
+	public MyEvaluationEngine(IJavaProject project, IJavaDebugTarget target) {
+		this.project = project;
+		this.target = target;
 	}
 
 	public void evaluateExpression(String snippet, IJavaStackFrame frame, IEvaluationListener listener)
@@ -70,18 +73,11 @@ public class MyEvaluationEngine implements IEvaluationEngine {
 		boolean hitBreakpoints = false;
 		int evaluationDetail = DebugEvent.EVALUATION;
 		ICompiledExpression expression = getCompiledExpression(snippet, frame);
-		IRuntimeContext context = new RuntimeContext(eval.getJavaProject(), frame);
+		IRuntimeContext context = new RuntimeContext(project, frame);
 		doEvaluation(expression, context, (IJavaThread) frame.getThread(), listener, evaluationDetail, hitBreakpoints);
 
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * org.eclipse.jdt.debug.eval.IAstEvaluationEngine#getCompiledExpression
-	 * (java.lang.String, org.eclipse.jdt.debug.core.IJavaStackFrame)
-	 */
 	public ICompiledExpression getCompiledExpression(String snippet, IJavaStackFrame frame) {
 		IJavaProject javaProject = getJavaProject();
 		RuntimeContext context = new RuntimeContext(javaProject, frame);
@@ -89,7 +85,7 @@ public class MyEvaluationEngine implements IEvaluationEngine {
 		EvaluationSourceGenerator mapper = null;
 		CompilationUnit unit = null;
 		try {
-			mapper = ohBoyDontYouMissHigherOrderProgrammingInJava(snippet, context);
+			mapper = myBuildArgumentString(snippet, context);
 			// Compile in context of declaring type to get proper visibility of
 			// locals and members.
 			// Compiling in context of receiving type potentially provides
@@ -116,8 +112,9 @@ public class MyEvaluationEngine implements IEvaluationEngine {
 		return createExpressionFromAST(snippet, mapper, unit);
 	}
 
-	private EvaluationSourceGenerator ohBoyDontYouMissHigherOrderProgrammingInJava(String snippet,
-			RuntimeContext context) throws CoreException, DebugException {
+	private EvaluationSourceGenerator myBuildArgumentString(String snippet, RuntimeContext context)
+			throws CoreException, DebugException {
+		// Oh boy, don't you wish Java had higher-order programming?
 		EvaluationSourceGenerator mapper;
 		IJavaVariable[] localsVar = context.getLocals();
 		int numLocalsVar = localsVar.length;
@@ -145,8 +142,8 @@ public class MyEvaluationEngine implements IEvaluationEngine {
 		int i = 0;
 		for (String each: vars.keySet()) {
 			localVariables[i] = each;
-			localTypesNames[i] = Signature.toString(((IJavaVariable) vars.get(each)).getGenericSignature())
-					.replace('/', '.');
+			localTypesNames[i] = Signature.toString(((IJavaVariable) vars.get(each)).getGenericSignature()).replace(
+					'/', '.');
 			i++;
 		}
 
@@ -168,6 +165,7 @@ public class MyEvaluationEngine implements IEvaluationEngine {
 	private ICompiledExpression createExpressionFromAST(String snippet, EvaluationSourceGenerator mapper,
 			CompilationUnit unit) {
 		IProblem[] problems = unit.getProblems();
+		problems = myIgnoreSomeProblems(problems);
 		if (problems.length != 0) {
 			boolean snippetError = false;
 			boolean runMethodError = false;
@@ -182,11 +180,6 @@ public class MyEvaluationEngine implements IEvaluationEngine {
 				if (problemId == IProblem.IsClassPathCorrect) {
 					errorSequence.addError(problem.getMessage());
 					snippetError = true;
-				}
-				if (problemId == IProblem.VoidMethodReturnsValue || problemId == IProblem.NotVisibleMethod
-						|| problemId == IProblem.NotVisibleConstructor || problemId == IProblem.NotVisibleField
-						|| problemId == IProblem.NotVisibleType) {
-					continue;
 				}
 				if (problem.isError()) {
 					if (codeSnippetStart <= errorOffset && errorOffset <= codeSnippetEnd) {
@@ -210,6 +203,26 @@ public class MyEvaluationEngine implements IEvaluationEngine {
 		unit.accept(visitor);
 
 		return visitor.getInstructions();
+	}
+
+	private IProblem[] myIgnoreSomeProblems(IProblem[] problems) {
+		// Oh boy, don't you wish Java had higher-order programming?
+		Collection filter = new ArrayList();
+		for (IProblem each: problems) {
+			switch (each.getID()) {
+			// Found in original code
+			case IProblem.VoidMethodReturnsValue:
+			case IProblem.NotVisibleMethod:
+			case IProblem.NotVisibleConstructor:
+			case IProblem.NotVisibleField:
+			case IProblem.NotVisibleType:
+				// Added by myself
+			case IProblem.RedefinedLocal:
+				continue;
+			}
+			filter.add(each);
+		}
+		return (IProblem[]) filter.toArray(new IProblem[filter.size()]);
 	}
 
 	private CompilationUnit parseCompilationUnit(char[] source, String unitName, IJavaProject project) {
@@ -264,28 +277,27 @@ public class MyEvaluationEngine implements IEvaluationEngine {
 	@Override
 	public void evaluate(String snippet, IJavaStackFrame frame, IEvaluationListener listener, int evaluationDetail,
 			boolean hitBreakpoints) throws DebugException {
-		throw new Error();
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public void evaluate(String snippet, IJavaObject thisContext, IJavaThread thread, IEvaluationListener listener,
 			int evaluationDetail, boolean hitBreakpoints) throws DebugException {
-		throw new Error();
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public IJavaProject getJavaProject() {
-		return eval.getJavaProject();
+		return project;
 	}
 
 	@Override
 	public IJavaDebugTarget getDebugTarget() {
-		return eval.getDebugTarget();
+		return target;
 	}
 
 	@Override
 	public void dispose() {
-		eval.dispose();
 	}
 
 	class EvalRunnable implements Runnable {

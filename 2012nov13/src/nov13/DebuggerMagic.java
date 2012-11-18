@@ -20,8 +20,6 @@ import org.eclipse.jdt.debug.core.IJavaStackFrame;
 import org.eclipse.jdt.debug.core.IJavaThread;
 import org.eclipse.jdt.debug.core.IJavaValue;
 import org.eclipse.jdt.debug.core.JDIDebugModel;
-import org.eclipse.jdt.debug.eval.EvaluationManager;
-import org.eclipse.jdt.debug.eval.IAstEvaluationEngine;
 import org.eclipse.jdt.debug.eval.IEvaluationListener;
 import org.eclipse.jdt.debug.eval.IEvaluationResult;
 import org.eclipse.jdt.internal.debug.ui.JavaDetailFormattersManager;
@@ -80,8 +78,7 @@ public class DebuggerMagic {
 					launch.getDebugTarget().breakpointAdded(bp);
 
 					IJavaDebugTarget target = (IJavaDebugTarget) launch.getDebugTarget();
-					IAstEvaluationEngine eval0 = EvaluationManager.newAstEvaluationEngine(myJavaProject, target);
-					eval = new MyEvaluationEngine(eval0);
+					eval = new MyEvaluationEngine(myJavaProject, target);
 				}
 			}
 		}
