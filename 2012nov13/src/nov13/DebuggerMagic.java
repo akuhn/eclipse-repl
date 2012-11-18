@@ -131,6 +131,10 @@ public class DebuggerMagic {
 			for (String each: result.getErrorMessages()) {
 				out.println(each);
 			}
+			DebugException exception = result.getException();
+			if (exception != null) {
+				out.println(exception.getMessage());
+			}
 		} else {
 			for (String each: result.internalVariables.keySet()) {
 				out.print(each);
