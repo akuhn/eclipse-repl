@@ -2,6 +2,7 @@ package nov13;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.regex.Pattern;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -107,7 +108,17 @@ public class DebuggerMagic {
 		}
 	}
 
-	private void evaluateStuff(String expression, final OutputStream out) throws Exception {
+	private static Pattern IMPORT = Pattern.compile("import\\s+(static\\s+)?\\w+(\\.\\w+)*(\\.\\*)?;");
+
+	private void evaluateStuff(String expression, final OutputStream os) throws Exception {
+		if (IMPORT.matcher(expression).matches()) {
+			eval.imports.add(expression);
+			PrintStream out = new PrintStream(os);
+			for (String each: eval.imports) {
+				out.println(each);
+			}
+			return;
+		}
 		IThread[] threads = launch.getDebugTarget().getThreads();
 		// XXX Assuming that the last frame is suspended on our breakpoint.
 		IJavaStackFrame frame = (IJavaStackFrame) threads[threads.length - 1].getTopStackFrame();
@@ -115,7 +126,7 @@ public class DebuggerMagic {
 			@Override
 			public void evaluationComplete(final IEvaluationResult result) {
 				try {
-					printEvaluationResult((MyEvaluationResult) result, out);
+					printEvaluationResult((MyEvaluationResult) result, os);
 				} catch (DebugException exception) {
 					throw new BullshitFree(exception);
 				}
@@ -139,7 +150,7 @@ public class DebuggerMagic {
 			for (String each: result.internalVariables.keySet()) {
 				out.print(each);
 				out.print("=");
-				out.println(result.internalVariables.get(each).getValue().toString());
+				out.println(result.internalVariables.get(each).getValue());
 			}
 			IJavaValue value = result.getValue();
 			JavaDetailFormattersManager man = JavaDetailFormattersManager.getDefault();

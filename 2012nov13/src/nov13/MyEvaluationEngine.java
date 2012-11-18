@@ -53,19 +53,22 @@ import com.sun.jdi.InvocationException;
 import com.sun.jdi.ObjectReference;
 
 /**
- * Copy of {@link ASTEvaluationEngine}, in order to access local variables of
+ * Copy of {@link ASTEvaluationEngine}, in order to access internal variables of
  * the AST interpreter.
  * 
  */
 public class MyEvaluationEngine implements IEvaluationEngine {
 
 	private Map<String, IVariable> internalVariables;
+	public Collection<String> imports;
+
 	private IJavaProject project;
 	private IJavaDebugTarget target;
 
 	public MyEvaluationEngine(IJavaProject project, IJavaDebugTarget target) {
 		this.project = project;
 		this.target = target;
+		this.imports = new ArrayList();
 	}
 
 	public void evaluateExpression(String snippet, IJavaStackFrame frame, IEvaluationListener listener)
@@ -82,27 +85,15 @@ public class MyEvaluationEngine implements IEvaluationEngine {
 		IJavaProject javaProject = getJavaProject();
 		RuntimeContext context = new RuntimeContext(javaProject, frame);
 
-		EvaluationSourceGenerator mapper = null;
+		MyEvaluationSourceGenerator mapper = null;
 		CompilationUnit unit = null;
 		try {
-			mapper = myBuildArgumentString(snippet, context);
-			// Compile in context of declaring type to get proper visibility of
-			// locals and members.
-			// Compiling in context of receiving type potentially provides
-			// access to more members,
-			// but does not allow access to privates members in declaring type
+			String[][] locals = myBuildArgumentString(context);
+			mapper = new MyEvaluationSourceGenerator(locals[0], locals[1], snippet);
+			mapper.imports = this.imports;
 			IJavaReferenceType receivingType = frame.getReferenceType();
-
-			// currently disabled - see bugs 99416 and 106492
-			// if (frame.isStatic()) {
-			// receivingType= frame.getReferenceType();
-			// } else {
-			// receivingType= (IJavaReferenceType)
-			// frame.getThis().getJavaType();
-			// }
-
-			unit = parseCompilationUnit(mapper.getSource(receivingType, javaProject, frame.isStatic()).toCharArray(),
-					mapper.getCompilationUnitName(), javaProject);
+			String source = mapper.getSource(receivingType, javaProject, frame.isStatic());
+			unit = parseCompilationUnit(source.toCharArray(), mapper.getCompilationUnitName(), javaProject);
 		} catch (CoreException e) {
 			InstructionSequence expression = new InstructionSequence(snippet);
 			expression.addError(e.getStatus().getMessage());
@@ -112,10 +103,8 @@ public class MyEvaluationEngine implements IEvaluationEngine {
 		return createExpressionFromAST(snippet, mapper, unit);
 	}
 
-	private EvaluationSourceGenerator myBuildArgumentString(String snippet, RuntimeContext context)
-			throws CoreException, DebugException {
+	private String[][] myBuildArgumentString(RuntimeContext context) throws CoreException, DebugException {
 		// Oh boy, don't you wish Java had higher-order programming?
-		EvaluationSourceGenerator mapper;
 		IJavaVariable[] localsVar = context.getLocals();
 		int numLocalsVar = localsVar.length;
 		Set<String> names = new HashSet<String>();
@@ -147,8 +136,7 @@ public class MyEvaluationEngine implements IEvaluationEngine {
 			i++;
 		}
 
-		mapper = new EvaluationSourceGenerator(localTypesNames, localVariables, snippet);
-		return mapper;
+		return new String[][] { localTypesNames, localVariables };
 	}
 
 	/**

@@ -2,6 +2,10 @@ package nov13;
 
 import java.lang.reflect.Field;
 
+/**
+ * Calling bullshit on this language and its shitty type checker.
+ * 
+ */
 public class BullshitFree extends RuntimeException {
 
 	private static final long serialVersionUID = 1L;
