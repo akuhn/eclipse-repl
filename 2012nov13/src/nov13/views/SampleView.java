@@ -68,9 +68,8 @@ public class SampleView extends ViewPart {
 		viewer.getDocument().addDocumentListener(new IDocumentListener() {
 			@Override
 			public void documentChanged(DocumentEvent event) {
-				IDocument doc = event.getDocument();
-				putCaretAtBottom(doc);
-				doc.removeDocumentListener(this);
+				setCaretToEndOfDocument();
+				event.getDocument().removeDocumentListener(this);
 			}
 
 			@Override
@@ -79,8 +78,8 @@ public class SampleView extends ViewPart {
 		});
 	}
 
-	private void putCaretAtBottom(IDocument doc) {
-		viewer.setSelectedRange(doc.getLength(), 0);
+	private void setCaretToEndOfDocument() {
+		viewer.getTextWidget().setCaretOffset(Integer.MAX_VALUE);
 	}
 
 	public void setFocus() {
@@ -116,7 +115,7 @@ public class SampleView extends ViewPart {
 					int last = doc.getNumberOfLines() - 1;
 					String line = e.keyCode == SWT.ARROW_UP ? history.previous() : history.next();
 					doc.replace(doc.getLineOffset(last), doc.getLineLength(last), line);
-					putCaretAtBottom(doc);
+					setCaretToEndOfDocument();
 				} catch (BadLocationException exception) {
 					throw new BullshitFree(exception);
 				}
