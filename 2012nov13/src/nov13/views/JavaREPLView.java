@@ -27,7 +27,7 @@ import org.eclipse.ui.console.IOConsoleOutputStream;
 import org.eclipse.ui.internal.console.IOConsoleViewer;
 import org.eclipse.ui.part.ViewPart;
 
-public class SampleView extends ViewPart {
+public class JavaREPLView extends ViewPart {
 
 	public static final String ID = "nov13.views.SampleView";
 
@@ -35,33 +35,15 @@ public class SampleView extends ViewPart {
 
 	private History history = new History();
 
+	private Job repl;
+
 	public void createPartControl(Composite parent) {
 		final IOConsole console = new IOConsole("REPL", null);
 		viewer = new IOConsoleViewer(parent, console);
 		viewer.getTextWidget().addKeyListener(history);
-
-		Job job = new Job("REPL") {
-
-			IOConsoleOutputStream out = console.newOutputStream();
-			IOConsoleInputStream in = console.getInputStream();
-			DebuggerMagic magic = new DebuggerMagic();
-
-			@Override
-			protected IStatus run(IProgressMonitor monitor) {
-				try {
-					String line = new BufferedReader(new InputStreamReader(in)).readLine();
-					magic.evaluate(line, out);
-					history.add(line);
-					updateCaretPositionAfterPrint();
-					this.schedule();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				return Status.OK_STATUS;
-			}
-		};
-		job.setSystem(true);
-		job.schedule();
+		repl = new ReadEvaluatePrintLoop("REPL", console);
+		repl.setSystem(true);
+		repl.schedule();
 	}
 
 	private void updateCaretPositionAfterPrint() {
@@ -84,6 +66,40 @@ public class SampleView extends ViewPart {
 
 	public void setFocus() {
 		viewer.getControl().setFocus();
+	}
+
+	public void dispose() {
+		// TODO does not seem to stop the job as the job is apparently blocked
+		// with waiting for input. Find way to stop job when tearing down.
+		repl.cancel();
+		super.dispose();
+	}
+
+	private final class ReadEvaluatePrintLoop extends Job {
+		IOConsoleOutputStream out;
+		IOConsoleInputStream in;
+		DebuggerMagic magic;
+
+		private ReadEvaluatePrintLoop(String name, IOConsole console) {
+			super(name);
+			out = console.newOutputStream();
+			in = console.getInputStream();
+			magic = new DebuggerMagic();
+		}
+
+		@Override
+		protected IStatus run(IProgressMonitor monitor) {
+			try {
+				String line = new BufferedReader(new InputStreamReader(in)).readLine();
+				magic.evaluate(line, out);
+				history.add(line);
+				updateCaretPositionAfterPrint();
+				this.schedule();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return Status.OK_STATUS;
+		}
 	}
 
 	private class History implements KeyListener {
