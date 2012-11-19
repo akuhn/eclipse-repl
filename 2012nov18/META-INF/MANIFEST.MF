@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: 2012nov18
+Bundle-SymbolicName: 2012nov18;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-Activator: nov18.Activator
+Require-Bundle: org.eclipse.core.runtime,
+ org.eclipse.ui,
+ org.eclipse.ui.console;bundle-version="3.5.100",
+ org.eclipse.jface.text;bundle-version="3.8.1"
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-ClassPath: .,
+ lib/jruby-complete-1.6.7.2.jar
