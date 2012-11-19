@@ -3,7 +3,6 @@ package nov18.views;
 import java.io.InputStream;
 import java.io.PrintStream;
 
-
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
