@@ -1,26 +1,21 @@
 package nov18.views;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.jface.text.BadLocationException;
-import org.eclipse.jface.text.Document;
-import org.eclipse.jface.text.IDocument;
-import org.eclipse.jface.text.ITextListener;
-import org.eclipse.jface.text.TextEvent;
-import org.eclipse.jface.text.source.SourceViewer;
-import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.ui.console.IOConsole;
 import org.eclipse.ui.internal.console.IOConsoleViewer;
 import org.eclipse.ui.part.ViewPart;
-import org.eclipse.ui.progress.UIJob;
-import org.jruby.Ruby;
+import org.jruby.embed.LocalVariableBehavior;
+import org.jruby.embed.ScriptingContainer;
 
 public class RubyConsoleView extends ViewPart {
 
@@ -28,66 +23,30 @@ public class RubyConsoleView extends ViewPart {
 
 	private IOConsoleViewer viewer;
 
-	private SourceViewer viewer2;
-
-	boolean isUpdating = false;
-
 	public void createPartControl(Composite parent) {
-		viewer2 = new SourceViewer(parent, null, SWT.V_SCROLL | SWT.H_SCROLL);
-		final IDocument doc = new Document();
+		IOConsole console = new IOConsole("JRuby Console", null);
+		viewer = new IOConsoleViewer(parent, console);
 
-		final MyInputStream in = new MyInputStream();
-		final PrintStream out = new PrintStream(new OutputStream() {
+		final ScriptingContainer con = new ScriptingContainer(LocalVariableBehavior.PERSISTENT);
+		final InputStream in = console.getInputStream();
 
-			@Override
-			public void write(final int b) throws IOException {
-				Job job = new UIJob("XXX") {
+		con.setOutput(new PrintStream(console.newOutputStream()));
+		con.setError(new PrintStream(console.newOutputStream()));
 
-					@Override
-					public IStatus runInUIThread(IProgressMonitor monitor) {
-						try {
-							isUpdating = true;
-							doc.replace(doc.getLength(), 0, new String(new char[] { (char) b }));
-							viewer2.getTextWidget().setCaretOffset(Integer.MAX_VALUE);
-						} catch (BadLocationException e) {
-							e.printStackTrace();
-						} finally {
-							isUpdating = false;
-						}
-						return Status.OK_STATUS;
-					}
-
-				};
-				job.schedule();
-
-			}
-
-		});
-
-		viewer2.setDocument(doc);
-		viewer2.addTextListener(new ITextListener() {
-
-			@Override
-			public void textChanged(TextEvent event) {
-				if (!isUpdating) in.appendData(event.getText().getBytes());
-			}
-		});
-
-		Job job = new Job("IRB") {
+		Job job = new Job("JRuby Console REPL") {
 			protected IStatus run(IProgressMonitor monitor) {
 
-				Ruby ruby = Ruby.newInstance(in, out, out);
-
-				StringBuilder buf = new StringBuilder();
-				buf.append("require 'irb'\n");
-				buf.append("require 'irb/completion'\n");
-				buf.append("ARGV << '--prompt' << 'default' << '--noverbose' << '--readline'\n");
-				buf.append("def STDIN.isatty; true; end\n");
-				buf.append("module IRB; class Context; def prompting?; true; end; end; end\n");
-				buf.append("IRB.start\n");
-				buf.append("\n");
-
-				ruby.evalScriptlet(buf.toString());
+				while (!monitor.isCanceled()) {
+					String line;
+					try {
+						line = new BufferedReader(new InputStreamReader(in)).readLine();
+						Object object = con.runScriptlet(line);
+						con.put("_", object);
+						con.runScriptlet("print '=> '; p _;");
+					} catch (IOException e) {
+						throw new RuntimeException(e);
+					}
+				}
 
 				return Status.OK_STATUS;
 			}
@@ -99,39 +58,7 @@ public class RubyConsoleView extends ViewPart {
 	}
 
 	public void setFocus() {
-		viewer2.getControl().setFocus();
-	}
-
-	public class MyInputStream extends InputStream {
-
-		private byte[] buf = new byte[100];
-		private int pos = 0;
-		private int limit = 0;
-
-		@Override
-		public synchronized int read() throws IOException {
-			while (pos == limit) {
-				try {
-					wait();
-				} catch (InterruptedException e) {
-				}
-			}
-			return buf[pos++];
-		}
-
-		public synchronized void appendData(byte[] data) {
-			if (limit + data.length > buf.length) { throw new Error(); }
-			for (byte each: data) {
-				buf[limit++] = each;
-			}
-			notifyAll();
-		}
-
-		@Override
-		public int available() throws IOException {
-			return limit - pos;
-		}
-
+		viewer.getControl().setFocus();
 	}
 
 }
