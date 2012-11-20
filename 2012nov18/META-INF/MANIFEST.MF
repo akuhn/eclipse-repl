@@ -4,10 +4,12 @@ Bundle-Name: 2012nov18
 Bundle-SymbolicName: 2012nov18;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: nov18.Activator
-Require-Bundle: org.eclipse.core.runtime,
+Require-Bundle: org.eclipse.core.resources,
+ org.eclipse.core.runtime,
+ org.eclipse.jdt.core,
+ org.eclipse.jface.text,
  org.eclipse.ui,
- org.eclipse.ui.console;bundle-version="3.5.100",
- org.eclipse.jface.text;bundle-version="3.8.1"
+ org.eclipse.ui.console
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ClassPath: .,
