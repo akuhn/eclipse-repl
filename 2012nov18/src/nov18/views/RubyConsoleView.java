@@ -1,6 +1,10 @@
 package nov18.views;
 
+import nov18.BullshitFree;
+
+import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.DocumentEvent;
+import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.IDocumentListener;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.console.IOConsole;
@@ -19,6 +23,7 @@ public class RubyConsoleView extends ViewPart {
 		viewer = new IOConsoleViewer(parent, console);
 		updateCaretWhenDocumentUpdates(viewer);
 		repl = new ReadEvaluatePrintLoop(console.getInputStream(), console.newOutputStream(), console.newOutputStream());
+		viewer.getTextWidget().addKeyListener(repl.asKeyListener(this));
 		repl.asJob().schedule();
 	}
 
@@ -44,6 +49,16 @@ public class RubyConsoleView extends ViewPart {
 			public void documentAboutToBeChanged(DocumentEvent event) {
 			}
 		});
+	}
+
+	public void replaceLastLine(String line) {
+		try {
+			IDocument doc = viewer.getDocument();
+			int last = doc.getNumberOfLines() - 1;
+			doc.replace(doc.getLineOffset(last), doc.getLineLength(last), line);
+		} catch (BadLocationException exception) {
+			throw new BullshitFree(exception);
+		}
 	}
 
 }
