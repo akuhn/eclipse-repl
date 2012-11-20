@@ -1,12 +1,15 @@
 package my.eclipse.repl;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.net.URL;
 import java.util.regex.Pattern;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.core.Launch;
@@ -37,7 +40,7 @@ import org.eclipse.jdt.launching.VMRunnerConfiguration;
 public class DebuggerMagic {
 
 	private static final String PROJECT_NAME = "example";
-	private static final String MAIN_CLASS_NAME = "com.example.Example";
+	private static final String MAIN_CLASS_NAME = "my.eclipse.repl.Main";
 	private IJavaProject myJavaProject;
 	private Launch launch;
 	private MyEvaluationEngine eval;
@@ -59,17 +62,13 @@ public class DebuggerMagic {
 		if (vmInstall != null) {
 			IVMRunner vmRunner = vmInstall.getVMRunner(ILaunchManager.DEBUG_MODE);
 			if (vmRunner != null) {
-				String[] classPath = null;
-				try {
-					classPath = JavaRuntime.computeDefaultRuntimeClassPath(myJavaProject);
-				} catch (CoreException e) {
-				}
+				String[] classPath = computeCustomClassPath();
 				if (classPath != null) {
-					VMRunnerConfiguration vmConfig = new VMRunnerConfiguration(MAIN_CLASS_NAME, classPath);
-					launch = new Launch(null, ILaunchManager.RUN_MODE, null);
+					VMRunnerConfiguration config = new VMRunnerConfiguration(MAIN_CLASS_NAME, classPath);
+					launch = new Launch(null, ILaunchManager.DEBUG_MODE, null);
 
 					IJavaMethodBreakpoint bp = createMagicBreakpoint();
-					vmRunner.run(vmConfig, launch, null);
+					vmRunner.run(config, launch, null);
 
 					// XXX Apparently we have to rely on the fact that things
 					// are slow and set the breakpoint after the configuration
@@ -83,6 +82,23 @@ public class DebuggerMagic {
 				}
 			}
 		}
+	}
+
+	private String[] computeCustomClassPath() {
+		StringList path = new StringList();
+		try {
+			path.add(JavaRuntime.computeDefaultRuntimeClassPath(myJavaProject));
+		} catch (CoreException exception) {
+			throw new BullshitFree(exception);
+		}
+		try {
+			URL entry = Activator.getContext().getBundle().getEntry("bin");
+			String string = FileLocator.toFileURL(entry).getFile();
+			path.add(string);
+		} catch (IOException exception) {
+			throw new BullshitFree(exception);
+		}
+		return path.asArray();
 	}
 
 	private IJavaProject getExampleProject() {
