@@ -16,6 +16,7 @@ import org.eclipse.debug.core.Launch;
 import org.eclipse.debug.core.model.IThread;
 import org.eclipse.debug.core.model.IValue;
 import org.eclipse.debug.ui.IValueDetailListener;
+import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.debug.core.IJavaDebugTarget;
@@ -31,6 +32,9 @@ import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.IVMRunner;
 import org.eclipse.jdt.launching.JavaRuntime;
 import org.eclipse.jdt.launching.VMRunnerConfiguration;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.ui.ISelectionService;
+import org.eclipse.ui.PlatformUI;
 
 /**
  * Runs example main method in example project, stops at method entry and
@@ -55,7 +59,7 @@ public class DebuggerMagic {
 
 	private void initializeMagic() throws Exception {
 
-		myJavaProject = getExampleProject();
+		myJavaProject = anyJavaProject();
 
 		IVMInstall vmInstall = JavaRuntime.getVMInstall(myJavaProject);
 		if (vmInstall == null) vmInstall = JavaRuntime.getDefaultVMInstall();
@@ -101,12 +105,15 @@ public class DebuggerMagic {
 		return path.asArray();
 	}
 
-	private IJavaProject getExampleProject() {
-		for (IProject p: ResourcesPlugin.getWorkspace().getRoot().getProjects()) {
-			if (p.getName().equals(PROJECT_NAME)) return JavaCore.create(p);
+	private IJavaProject anyJavaProject() {
+		ISelectionService window = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getSelectionService();
+		IStructuredSelection sel = (IStructuredSelection) window.getSelection("org.eclipse.jdt.ui.PackageExplorer");
+		if (sel != null && !sel.isEmpty()) return ((IJavaElement) sel.iterator().next()).getJavaProject();
+		for (IProject each: ResourcesPlugin.getWorkspace().getRoot().getProjects()) {
+			IJavaProject p = JavaCore.create(each);
+			if (p != null) return p;
 		}
-		throw new RuntimeException(String.format("Did not find '%s' project with %s#main method!", PROJECT_NAME,
-				MAIN_CLASS_NAME));
+		throw new Error("No java project found!");
 	}
 
 	private IJavaMethodBreakpoint createMagicBreakpoint() throws CoreException {
