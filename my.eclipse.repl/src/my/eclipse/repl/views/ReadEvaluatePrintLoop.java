@@ -44,12 +44,19 @@ final class ReadEvaluatePrintLoop extends Job {
 			String line = new BufferedReader(new InputStreamReader(in)).readLine();
 			magic.evaluate(line, out);
 			history.add(line);
-			view.updateCaretPositionAfterPrint();
 			this.schedule();
 		} catch (IOException e) {
-			e.printStackTrace();
+			// ASSUME input stream closed
 		}
 		return Status.OK_STATUS;
+	}
+
+	public void dispose() {
+		try {
+			in.close();
+		} catch (IOException e) {
+			// ASSUME should not happen
+		}
 	}
 
 	class History implements KeyListener {

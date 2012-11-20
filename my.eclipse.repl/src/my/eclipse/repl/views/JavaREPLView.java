@@ -17,25 +17,26 @@ public class JavaREPLView extends ViewPart {
 
 	private IOConsoleViewer viewer;
 
+	private ReadEvaluatePrintLoop repl;
+
+	@Override
 	public void createPartControl(Composite parent) {
 		IOConsole console = new IOConsole("REPL", null);
-		ReadEvaluatePrintLoop repl = new ReadEvaluatePrintLoop(this, console);
+		repl = new ReadEvaluatePrintLoop(this, console);
 		viewer = new IOConsoleViewer(parent, console);
 		updateCaretWhenDocumentUpdates();
 		viewer.getTextWidget().addKeyListener(repl.history);
 		repl.schedule();
 	}
 
-	void updateCaretPositionAfterPrint() {
-
-	}
-
+	@Override
 	public void setFocus() {
 		viewer.getControl().setFocus();
 	}
 
+	@Override
 	public void dispose() {
-		// TODO Find a way to stop job, job#cancel is not doing it.
+		repl.dispose();
 		super.dispose();
 	}
 

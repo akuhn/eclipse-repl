@@ -43,7 +43,6 @@ import org.eclipse.ui.PlatformUI;
  */
 public class DebuggerMagic {
 
-	private static final String PROJECT_NAME = "example";
 	private static final String MAIN_CLASS_NAME = "my.eclipse.repl.Main";
 	private IJavaProject myJavaProject;
 	private Launch launch;

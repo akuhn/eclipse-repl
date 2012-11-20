@@ -32,19 +32,6 @@
    <extension
          point="org.eclipse.ui.menus">
       <menuContribution
-            locationURI="menu:org.eclipse.ui.main.menu?after=additions">
-         <menu
-               id="my.eclipse.repl.menus.sampleMenu"
-               label="Sample Menu"
-               mnemonic="M">
-            <command
-                  commandId="my.eclipse.repl.commands.sampleCommand"
-                  id="my.eclipse.repl.menus.sampleCommand"
-                  mnemonic="S">
-            </command>
-         </menu>
-      </menuContribution>
-      <menuContribution
             locationURI="toolbar:org.eclipse.ui.main.toolbar?after=additions">
          <toolbar
                id="my.eclipse.repl.toolbars.sampleToolbar">
@@ -61,7 +48,7 @@
          point="org.eclipse.ui.views">
       <category
             id="my.eclipse.repl"
-            name="Sample Category">
+            name="Eclipse REPL">
       </category>
       <view
             category="my.eclipse.repl"

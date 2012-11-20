@@ -4,15 +4,15 @@
    <extension
          point="org.eclipse.ui.views">
       <category
-            id="my.eclipse.repl.jruby"
-            name="Sample Category">
+            id="my.eclipse.repl"
+            name="Eclipse REPL">
       </category>
       <view
-            category="my.eclipse.repl.jruby"
+            category="my.eclipse.repl"
             class="my.eclipse.repl.jruby.views.RubyConsoleView"
             icon="icons/sample.gif"
             id="my.eclipse.repl.jruby.views.SampleView"
-            name="Sample View">
+            name="Jruby REPL">
       </view>
    </extension>
    <extension
@@ -22,7 +22,7 @@
          <view
                id="my.eclipse.repl.jruby.views.SampleView"
                ratio="0.5"
-               relationship="right"
+               relationship="stack"
                relative="org.eclipse.ui.views.ProblemView">
          </view>
       </perspectiveExtension>
@@ -48,19 +48,6 @@
    </extension>
    <extension
          point="org.eclipse.ui.menus">
-      <menuContribution
-            locationURI="menu:org.eclipse.ui.main.menu?after=additions">
-         <menu
-               id="my.eclipse.repl.jruby.menus.sampleMenu"
-               label="Sample Menu"
-               mnemonic="M">
-            <command
-                  commandId="my.eclipse.repl.jruby.commands.sampleCommand"
-                  id="my.eclipse.repl.jruby.menus.sampleCommand"
-                  mnemonic="S">
-            </command>
-         </menu>
-      </menuContribution>
       <menuContribution
             locationURI="toolbar:org.eclipse.ui.main.toolbar?after=additions">
          <toolbar
