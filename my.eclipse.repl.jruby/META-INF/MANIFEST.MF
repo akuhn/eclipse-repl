@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: JRuby REPL
+Bundle-SymbolicName: my.eclipse.repl.jruby;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-Activator: my.eclipse.repl.jruby.Activator
+Require-Bundle: org.eclipse.core.resources,
+ org.eclipse.core.runtime,
+ org.eclipse.jdt.core,
+ org.eclipse.jface.text,
+ org.eclipse.ui,
+ org.eclipse.ui.console
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-ClassPath: .,
+ lib/jruby-complete-1.6.7.2.jar

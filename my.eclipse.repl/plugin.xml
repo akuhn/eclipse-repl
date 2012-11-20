@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.ui.commands">
+      <category
+            id="my.eclipse.repl.commands.category"
+            name="Eclipse REPL">
+      </category>
+      <command
+            categoryId="my.eclipse.repl.commands.category"
+            id="my.eclipse.repl.commands.sampleCommand"
+            name="Open Java REPL">
+      </command>
+   </extension>
+   <extension
+         point="org.eclipse.ui.handlers">
+      <handler
+            class="my.eclipse.repl.handlers.OpenJavaREPLHandler"
+            commandId="my.eclipse.repl.commands.sampleCommand">
+      </handler>
+   </extension>
+   <extension
+         point="org.eclipse.ui.bindings">
+      <key
+            commandId="my.eclipse.repl.commands.sampleCommand"
+            contextId="org.eclipse.ui.contexts.window"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+6">
+      </key>
+   </extension>
+   <extension
+         point="org.eclipse.ui.menus">
+      <menuContribution
+            locationURI="menu:org.eclipse.ui.main.menu?after=additions">
+         <menu
+               id="my.eclipse.repl.menus.sampleMenu"
+               label="Sample Menu"
+               mnemonic="M">
+            <command
+                  commandId="my.eclipse.repl.commands.sampleCommand"
+                  id="my.eclipse.repl.menus.sampleCommand"
+                  mnemonic="S">
+            </command>
+         </menu>
+      </menuContribution>
+      <menuContribution
+            locationURI="toolbar:org.eclipse.ui.main.toolbar?after=additions">
+         <toolbar
+               id="my.eclipse.repl.toolbars.sampleToolbar">
+            <command
+                  commandId="my.eclipse.repl.commands.sampleCommand"
+                  icon="icons/sample.gif"
+                  id="my.eclipse.repl.toolbars.sampleCommand"
+                  tooltip="Open Java REPL">
+            </command>
+         </toolbar>
+      </menuContribution>
+   </extension>
+   <extension
+         point="org.eclipse.ui.views">
+      <category
+            id="my.eclipse.repl"
+            name="Sample Category">
+      </category>
+      <view
+            category="my.eclipse.repl"
+            class="my.eclipse.repl.views.JavaREPLView"
+            icon="icons/sample.gif"
+            id="my.eclipse.repl.views.SampleView"
+            name="Java REPL">
+      </view>
+   </extension>
+   <extension
+         point="org.eclipse.ui.perspectiveExtensions">
+      <perspectiveExtension
+            targetID="org.eclipse.jdt.ui.JavaPerspective">
+         <view
+               id="my.eclipse.repl.views.SampleView"
+               ratio="0.5"
+               relationship="stack"
+               relative="org.eclipse.ui.editorss">
+         </view>
+      </perspectiveExtension>
+   </extension>
+
+</plugin>
