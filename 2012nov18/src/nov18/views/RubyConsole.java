@@ -1,5 +1,6 @@
 package nov18.views;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 
@@ -25,12 +26,24 @@ public class RubyConsole extends IOConsole {
 
 				StringBuilder buf = new StringBuilder();
 				buf.append("require 'irb'\n");
+				buf.append("require 'irb/completion'\n");
 				buf.append("ARGV << '--prompt' << 'default' << '--noverbose'\n");
 				buf.append("module IRB; class Context; def prompting?; true; end; end; end\n");
 				buf.append("IRB.start\n");
 				buf.append("\n");
 
-				ruby.evalScriptlet(buf.toString());
+				// ruby.evalScriptlet(buf.toString());
+
+				try {
+					while (true) {
+						char b = (char) in.read();
+						out.append(b).append('\n');
+					}
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
 				return Status.OK_STATUS;
 			}
 
