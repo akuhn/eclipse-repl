@@ -6,14 +6,16 @@ Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: my.eclipse.repl.Activator
 Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.ui,
- org.eclipse.debug.core;bundle-version="3.7.100",
- org.eclipse.debug.ui;bundle-version="3.8.1",
- org.eclipse.jdt.core;bundle-version="3.8.2",
- org.eclipse.jdt.debug.ui;bundle-version="3.5.1",
- org.eclipse.jdt.debug;bundle-version="3.7.101",
- org.eclipse.jdt.launching;bundle-version="3.6.100",
- org.eclipse.jface.text;bundle-version="3.8.1",
- org.eclipse.pde.ui;bundle-version="3.7.1",
- org.eclipse.ui.console;bundle-version="3.5.100"
+ org.eclipse.debug.core,
+ org.eclipse.debug.ui,
+ org.eclipse.jdt.core,
+ org.eclipse.jdt.debug,
+ org.eclipse.jdt.debug.ui,
+ org.eclipse.jdt.launching,
+ org.eclipse.jdt.ui,
+ org.eclipse.jface.text,
+ org.eclipse.pde.ui,
+ org.eclipse.ui.console,
+ org.eclipse.ui.editors
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
