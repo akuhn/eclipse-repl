@@ -9,7 +9,7 @@
       </category>
       <command
             categoryId="my.eclipse.repl.commands.category"
-            id="my.eclipse.repl.commands.sampleCommand"
+            id="my.eclipse.repl.commands.openJavaREPL"
             name="Open Java REPL">
       </command>
    </extension>
@@ -17,13 +17,13 @@
          point="org.eclipse.ui.handlers">
       <handler
             class="my.eclipse.repl.handlers.OpenJavaREPLHandler"
-            commandId="my.eclipse.repl.commands.sampleCommand">
+            commandId="my.eclipse.repl.commands.openJavaREPL">
       </handler>
    </extension>
    <extension
          point="org.eclipse.ui.bindings">
       <key
-            commandId="my.eclipse.repl.commands.sampleCommand"
+            commandId="my.eclipse.repl.commands.openJavaREPL"
             contextId="org.eclipse.ui.contexts.window"
             schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
             sequence="M1+6">
@@ -36,7 +36,7 @@
          <toolbar
                id="my.eclipse.repl.toolbars.sampleToolbar">
             <command
-                  commandId="my.eclipse.repl.commands.sampleCommand"
+                  commandId="my.eclipse.repl.commands.openJavaREPL"
                   icon="icons/sample.gif"
                   id="my.eclipse.repl.toolbars.sampleCommand"
                   tooltip="Open Java REPL">
@@ -54,8 +54,15 @@
             category="my.eclipse.repl"
             class="my.eclipse.repl.views.JavaREPLView"
             icon="icons/sample.gif"
-            id="my.eclipse.repl.views.SampleView"
+            id="my.eclipse.repl.views.JavaREPL"
             name="Java REPL">
+      </view>
+      <view
+            category="my.eclipse.repl"
+            class="my.eclipse.repl.views.SampleView"
+            icon="icons/sample.gif"
+            id="my.eclipse.repl.views.SampleView"
+            name="Sample View">
       </view>
    </extension>
    <extension
@@ -63,7 +70,7 @@
       <perspectiveExtension
             targetID="org.eclipse.jdt.ui.JavaPerspective">
          <view
-               id="my.eclipse.repl.views.SampleView"
+               id="my.eclipse.repl.views.JavaREPL"
                ratio="0.5"
                relationship="stack"
                relative="org.eclipse.ui.editorss">

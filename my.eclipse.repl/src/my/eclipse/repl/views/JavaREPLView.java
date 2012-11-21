@@ -13,7 +13,7 @@ import org.eclipse.ui.part.ViewPart;
 
 public class JavaREPLView extends ViewPart {
 
-	public static final String ID = "my.eclipse.repl.views.SampleView";
+	public static final String ID = "my.eclipse.repl.views.JavaREPL";
 
 	private IOConsoleViewer viewer;
 
