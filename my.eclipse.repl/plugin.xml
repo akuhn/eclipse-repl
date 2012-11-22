@@ -52,17 +52,10 @@
       </category>
       <view
             category="my.eclipse.repl"
-            class="my.eclipse.repl.views.JavaREPLView"
+            class="my.eclipse.repl.views.JavaConsoleView"
             icon="icons/sample.gif"
             id="my.eclipse.repl.views.JavaREPL"
             name="Java REPL">
-      </view>
-      <view
-            category="my.eclipse.repl"
-            class="my.eclipse.repl.views.SampleView"
-            icon="icons/sample.gif"
-            id="my.eclipse.repl.views.SampleView"
-            name="Sample View">
       </view>
    </extension>
    <extension

@@ -106,6 +106,15 @@ class ConsoleViewer extends JDISourceViewer {
 		getTextWidget().invokeAction(ST.TEXT_END);
 	}
 
+	public void replaceLastLine(String line) {
+		try {
+			IDocument doc = getDocument();
+			doc.replace(mark, doc.getLength(), line);
+		} catch (BadLocationException exception) {
+			throw new BullshitFree(exception);
+		}
+	}
+
 	public BlockingInputStream getInputStream() {
 		return in;
 	}

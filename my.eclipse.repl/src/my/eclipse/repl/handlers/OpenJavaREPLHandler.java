@@ -1,7 +1,7 @@
 package my.eclipse.repl.handlers;
 
 import my.eclipse.repl.BullshitFree;
-import my.eclipse.repl.views.JavaREPLView;
+import my.eclipse.repl.views.JavaConsoleView;
 
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
@@ -13,7 +13,7 @@ public class OpenJavaREPLHandler extends AbstractHandler {
 
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 		try {
-			HandlerUtil.getActiveWorkbenchWindow(event).getActivePage().showView(JavaREPLView.ID);
+			HandlerUtil.getActiveWorkbenchWindow(event).getActivePage().showView(JavaConsoleView.ID);
 		} catch (PartInitException exception) {
 			throw new BullshitFree(exception);
 		}

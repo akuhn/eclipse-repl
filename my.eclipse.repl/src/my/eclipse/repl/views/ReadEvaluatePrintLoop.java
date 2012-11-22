@@ -2,7 +2,9 @@ package my.eclipse.repl.views;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,51 +17,61 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
-import org.eclipse.ui.console.IOConsole;
-import org.eclipse.ui.console.IOConsoleInputStream;
-import org.eclipse.ui.console.IOConsoleOutputStream;
 
-final class ReadEvaluatePrintLoop extends Job {
+final class ReadEvaluatePrintLoop {
 
-	private IOConsoleOutputStream out;
-	private IOConsoleInputStream in;
 	private DebuggerMagic magic;
-	private JavaREPLView view;
 
-	public History history;
+	private InputStream in;
+	private OutputStream out;
+	private OutputStream err;
+	private History history;
 
-	public ReadEvaluatePrintLoop(JavaREPLView view, IOConsole console) {
-		super("REPL");
-		this.setSystem(true);
-		this.view = view;
-		out = console.newOutputStream();
-		in = console.getInputStream();
-		magic = new DebuggerMagic();
-		history = new History();
+	public ReadEvaluatePrintLoop(InputStream in, OutputStream out, OutputStream err) {
+		this.in = in;
+		this.out = out;
+		this.err = err;
+		this.history = new History();
 	}
 
-	@Override
-	public IStatus run(IProgressMonitor monitor) {
+	private void initialize() {
+		magic = new DebuggerMagic();
+	}
+
+	public void readEvaluatePrint() {
 		try {
 			String line = new BufferedReader(new InputStreamReader(in)).readLine();
-			magic.evaluate(line, out);
 			history.add(line);
-			this.schedule();
-		} catch (IOException e) {
-			// ASSUME input stream closed
+			if (magic == null) initialize();
+			magic.evaluate(line, out);
+		} catch (IOException ex) {
+			// ASSUME input stream just closed
 		}
-		return Status.OK_STATUS;
+	}
+
+	public Job asJob() {
+		Job job = new Job("JRuby REPL") {
+			@Override
+			public IStatus run(IProgressMonitor monitor) {
+				while (!monitor.isCanceled()) {
+					readEvaluatePrint();
+				}
+				return Status.OK_STATUS;
+			}
+		};
+		job.setSystem(true);
+		return job;
 	}
 
 	public void dispose() {
 		try {
 			in.close();
 		} catch (IOException e) {
-			// ASSUME should not happen
+			// ASSUME redundant
 		}
 	}
 
-	class History implements KeyListener {
+	class History {
 
 		private List<String> list = new ArrayList();
 		private int index = 0;
@@ -80,17 +92,28 @@ final class ReadEvaluatePrintLoop extends Job {
 			return list.get(index);
 		}
 
-		@Override
-		public void keyPressed(KeyEvent e) {
-			if (e.keyCode == SWT.ARROW_UP || e.keyCode == SWT.ARROW_DOWN) {
-				String line = e.keyCode == SWT.ARROW_UP ? history.previous() : history.next();
-				view.replaceLastLine(line);
-			}
-		}
+	}
 
-		@Override
-		public void keyReleased(KeyEvent e) {
-		}
+	public KeyListener asKeyListener(final ConsoleViewer viewer) {
+		return new KeyListener() {
+
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (e.keyCode == SWT.ARROW_UP || e.keyCode == SWT.ARROW_DOWN) {
+					String line = e.keyCode == SWT.ARROW_UP ? history.previous() : history.next();
+					viewer.replaceLastLine(line);
+				}
+			}
+
+			@Override
+			public void keyReleased(KeyEvent e) {
+			}
+
+		};
+	}
+
+	public void connect(ConsoleViewer viewer) {
+		viewer.getTextWidget().addKeyListener(asKeyListener(viewer));
 
 	}
 

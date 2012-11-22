@@ -1,16 +1,8 @@
 package my.eclipse.repl.views;
 
-import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.PrintStream;
 
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.internal.debug.ui.JDIDebugUIPlugin;
 import org.eclipse.jdt.internal.debug.ui.contentassist.CurrentFrameContext;
 import org.eclipse.jdt.internal.debug.ui.contentassist.JavaDebugContentAssistProcessor;
@@ -22,45 +14,33 @@ import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.part.ViewPart;
 
-public class SampleView extends ViewPart {
+public class JavaConsoleView extends ViewPart {
 
-	public static final String ID = "my.eclipse.repl.views.SampleView";
-	ConsoleViewer viewer;
+	public static final String ID = "my.eclipse.repl.views.JavaREPL";
 
-	public void setFocus() {
-		viewer.getControl().setFocus();
-	}
+	private ConsoleViewer viewer;
+	private ReadEvaluatePrintLoop repl;
 
 	@Override
 	public void createPartControl(Composite parent) {
 		viewer = new ConsoleViewer(parent);
 		configureSourceViewer(viewer);
-		final InputStream in = viewer.getInputStream();
-		final OutputStream out = viewer.getOutputStream();
+		InputStream in = viewer.getInputStream();
+		OutputStream out = viewer.getOutputStream();
+		repl = new ReadEvaluatePrintLoop(in, out, out);
+		repl.connect(viewer);
+		repl.asJob().schedule();
+	}
 
-		viewer.getDocument().set("new Hello().world(); \"hello\"");
+	@Override
+	public void setFocus() {
+		viewer.getControl().setFocus();
+	}
 
-		Job job = new Job("Sample") {
-
-			@Override
-			protected IStatus run(IProgressMonitor monitor) {
-				try {
-					String line;
-					line = new BufferedReader(new InputStreamReader(in)).readLine();
-					new PrintStream(out).println(line);
-					line = new BufferedReader(new InputStreamReader(in)).readLine();
-					new PrintStream(out).println(line);
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				return Status.OK_STATUS;
-			}
-
-		};
-		job.setSystem(true);
-		job.schedule();
-
+	@Override
+	public void dispose() {
+		repl.dispose();
+		super.dispose();
 	}
 
 	private void configureSourceViewer(ISourceViewer viewer) {
