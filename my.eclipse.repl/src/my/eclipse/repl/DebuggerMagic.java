@@ -133,6 +133,7 @@ public class DebuggerMagic {
 	private static Pattern IMPORT = Pattern.compile("import\\s+(static\\s+)?\\w+(\\.\\w+)*(\\.\\*)?;");
 
 	private void evaluateStuff(String expression, final OutputStream os) throws Exception {
+		if (expression == null) return;
 		if (IMPORT.matcher(expression).matches()) {
 			eval.imports.add(expression);
 			PrintStream out = new PrintStream(os);

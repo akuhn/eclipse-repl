@@ -12,7 +12,6 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.internal.debug.ui.JDIDebugUIPlugin;
-import org.eclipse.jdt.internal.debug.ui.JDISourceViewer;
 import org.eclipse.jdt.internal.debug.ui.contentassist.CurrentFrameContext;
 import org.eclipse.jdt.internal.debug.ui.contentassist.JavaDebugContentAssistProcessor;
 import org.eclipse.jdt.internal.debug.ui.display.DisplayViewerConfiguration;
@@ -20,15 +19,13 @@ import org.eclipse.jdt.ui.text.JavaTextTools;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.contentassist.IContentAssistProcessor;
 import org.eclipse.jface.text.source.ISourceViewer;
-import org.eclipse.jface.text.source.SourceViewer;
-import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.part.ViewPart;
 
 public class SampleView extends ViewPart {
 
 	public static final String ID = "my.eclipse.repl.views.SampleView";
-	SourceViewer viewer;
+	ConsoleViewer viewer;
 
 	public void setFocus() {
 		viewer.getControl().setFocus();
@@ -36,11 +33,10 @@ public class SampleView extends ViewPart {
 
 	@Override
 	public void createPartControl(Composite parent) {
-		viewer = new JDISourceViewer(parent, null, SWT.V_SCROLL | SWT.H_SCROLL);
+		viewer = new ConsoleViewer(parent);
 		configureSourceViewer(viewer);
-		ConsoleBehavior console = new ConsoleBehavior(viewer);
-		final InputStream in = console.getInputStream();
-		final OutputStream out = console.getOutputStream();
+		final InputStream in = viewer.getInputStream();
+		final OutputStream out = viewer.getOutputStream();
 
 		viewer.getDocument().set("new Hello().world(); \"hello\"");
 
