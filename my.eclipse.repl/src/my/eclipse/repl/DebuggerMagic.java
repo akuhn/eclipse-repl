@@ -1,8 +1,6 @@
 package my.eclipse.repl;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
@@ -137,9 +135,19 @@ public class DebuggerMagic {
 		return bp;
 	}
 
-	public void evaluate(String expression, OutputStream out) {
+	public String evaluate(String expression) {
+		assert expression != null;
+		if (IMPORT.matcher(expression).matches()) {
+			eval.imports.add(expression);
+			StringBuilder buf = new StringBuilder();
+			for (String each: eval.imports) {
+				buf.append(each);
+				buf.append('\n');
+			}
+			return buf.toString();
+		}
 		try {
-			evaluateStuff(expression, out);
+			return evaluateStuff(expression);
 		} catch (Exception exception) {
 			throw new BullshitFree(exception);
 		}
@@ -147,59 +155,94 @@ public class DebuggerMagic {
 
 	private static Pattern IMPORT = Pattern.compile("import\\s+(static\\s+)?\\w+(\\.\\w+)*(\\.\\*)?;");
 
-	private void evaluateStuff(String expression, final OutputStream os) throws Exception {
-		if (expression == null) return;
-		if (IMPORT.matcher(expression).matches()) {
-			eval.imports.add(expression);
-			PrintStream out = new PrintStream(os);
-			for (String each: eval.imports) {
-				out.println(each);
-			}
-			return;
-		}
+	private String evaluateStuff(String expression) throws DebugException, InterruptedException {
 		IThread[] threads = launch.getDebugTarget().getThreads();
 		isSuspended.await();
-		IJavaStackFrame frame = (IJavaStackFrame) threads[threads.length - 1].getTopStackFrame();
-		IEvaluationListener callback = new IEvaluationListener() {
-			@Override
-			public void evaluationComplete(final IEvaluationResult result) {
-				try {
-					printEvaluationResult((MyEvaluationResult) result, os);
-				} catch (DebugException exception) {
-					throw new BullshitFree(exception);
-				}
-			}
 
-		};
-		eval.evaluateExpression(expression, frame, callback);
+		// ASSUME last thread is suspended.
+
+		IJavaStackFrame frame = (IJavaStackFrame) threads[threads.length - 1].getTopStackFrame();
+		EvaluationPromise result = new EvaluationPromise();
+		eval.evaluateExpression(expression, frame, result);
+		return printEvaluationResult((MyEvaluationResult) result.await());
 	}
 
-	public void printEvaluationResult(MyEvaluationResult result, OutputStream os) throws DebugException {
-		final PrintStream out = new PrintStream(os);
-		if (result.hasErrors()) {
-			for (String each: result.getErrorMessages()) {
-				out.println(each);
-			}
-			DebugException exception = result.getException();
-			if (exception != null) {
-				out.println(exception.getMessage());
-			}
-		} else {
-			for (String each: result.internalVariables.keySet()) {
-				out.print(each);
-				out.print("=");
-				out.println(result.internalVariables.get(each).getValue());
-			}
-			IJavaValue value = result.getValue();
-			JavaDetailFormattersManager man = JavaDetailFormattersManager.getDefault();
-			IThread[] threads = launch.getDebugTarget().getThreads();
-			man.computeValueDetail(value, (IJavaThread) threads[threads.length - 1], new IValueDetailListener() {
-				@Override
-				public void detailComputed(IValue value, String result) {
-					out.println(result);
-				}
-			});
+	public String printEvaluationResult(MyEvaluationResult result) throws DebugException {
+		if (result.hasErrors()) return printEvaluationErrors(result);
+
+		IJavaValue value = result.getValue();
+		JavaDetailFormattersManager man = JavaDetailFormattersManager.getDefault();
+		ValueDetailPromise detail = new ValueDetailPromise();
+
+		// ASSUME last thread is suspended.
+
+		IThread[] threads = launch.getDebugTarget().getThreads();
+		man.computeValueDetail(value, (IJavaThread) threads[threads.length - 1], detail);
+		return detail.await();
+	}
+
+	private String printEvaluationErrors(MyEvaluationResult result) {
+		StringBuilder buf = new StringBuilder();
+		for (String each: result.getErrorMessages()) {
+			buf.append(each);
+			buf.append('\n');
 		}
+		DebugException exception = result.getException();
+		if (exception != null) {
+			buf.append(exception.getMessage());
+			buf.append('\n');
+		}
+		return buf.toString();
+	}
+
+}
+
+// XXX could we use a dynamic proxy to create these classes? ^^
+
+class EvaluationPromise implements IEvaluationListener {
+
+	CountDownLatch hasResult = new CountDownLatch(1);
+	private IEvaluationResult result;
+
+	@Override
+	public void evaluationComplete(IEvaluationResult result) {
+		this.result = result;
+		hasResult.countDown();
+	}
+
+	public IEvaluationResult await() {
+		while (result == null) {
+			try {
+				hasResult.await();
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+		}
+		return result;
+	}
+
+}
+
+class ValueDetailPromise implements IValueDetailListener {
+
+	CountDownLatch hasResult = new CountDownLatch(1);
+	private String result;
+
+	@Override
+	public void detailComputed(IValue value, String result) {
+		this.result = result;
+		hasResult.countDown();
+	}
+
+	public String await() {
+		while (result == null) {
+			try {
+				hasResult.await();
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+			}
+		}
+		return result;
 	}
 
 }

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,14 +24,12 @@ final class ReadEvaluatePrintLoop {
 	private DebuggerMagic magic;
 
 	private InputStream in;
-	private OutputStream out;
-	private OutputStream err;
+	private PrintStream out;
 	private History history;
 
 	public ReadEvaluatePrintLoop(InputStream in, OutputStream out, OutputStream err) {
 		this.in = in;
-		this.out = out;
-		this.err = err;
+		this.out = new PrintStream(out);
 		this.history = new History();
 	}
 
@@ -40,10 +39,13 @@ final class ReadEvaluatePrintLoop {
 
 	public void readEvaluatePrint() {
 		try {
+			out.print(">> ");
 			String line = new BufferedReader(new InputStreamReader(in)).readLine();
 			history.add(line);
 			if (magic == null) initialize();
-			magic.evaluate(line, out);
+			String result = magic.evaluate(line);
+			out.print("=> ");
+			out.println(result);
 		} catch (IOException ex) {
 			// ASSUME input stream just closed
 		}
