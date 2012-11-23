@@ -1,6 +1,6 @@
 package my.eclipse.repl.handlers;
 
-import my.eclipse.repl.BullshitFree;
+import my.eclipse.repl.util.BullshitFree;
 import my.eclipse.repl.views.JavaConsoleView;
 
 import org.eclipse.core.commands.AbstractHandler;

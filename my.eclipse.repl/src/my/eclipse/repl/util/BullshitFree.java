@@ -1,4 +1,4 @@
-package my.eclipse.repl;
+package my.eclipse.repl.util;
 
 import java.lang.reflect.Field;
 

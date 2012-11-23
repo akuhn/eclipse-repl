@@ -6,6 +6,10 @@ import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.regex.Pattern;
 
+import my.eclipse.repl.util.BullshitFree;
+import my.eclipse.repl.util.Promise;
+import my.eclipse.repl.util.StringList;
+
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
@@ -14,7 +18,6 @@ import org.eclipse.debug.core.DebugException;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.core.Launch;
 import org.eclipse.debug.core.model.IThread;
-import org.eclipse.debug.core.model.IValue;
 import org.eclipse.debug.ui.IValueDetailListener;
 import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
@@ -24,7 +27,6 @@ import org.eclipse.jdt.debug.core.IJavaStackFrame;
 import org.eclipse.jdt.debug.core.IJavaThread;
 import org.eclipse.jdt.debug.core.IJavaValue;
 import org.eclipse.jdt.debug.eval.IEvaluationListener;
-import org.eclipse.jdt.debug.eval.IEvaluationResult;
 import org.eclipse.jdt.internal.debug.core.breakpoints.JavaMethodBreakpoint;
 import org.eclipse.jdt.internal.debug.core.model.JDIThread;
 import org.eclipse.jdt.internal.debug.ui.JavaDetailFormattersManager;
@@ -162,9 +164,9 @@ public class DebuggerMagic {
 		// ASSUME last thread is suspended.
 
 		IJavaStackFrame frame = (IJavaStackFrame) threads[threads.length - 1].getTopStackFrame();
-		EvaluationPromise result = new EvaluationPromise();
-		eval.evaluateExpression(expression, frame, result);
-		return printEvaluationResult((MyEvaluationResult) result.await());
+		Promise result = new Promise(IEvaluationListener.class);
+		eval.evaluateExpression(expression, frame, (IEvaluationListener) result.callback());
+		return printEvaluationResult((MyEvaluationResult) result.await()[0]);
 	}
 
 	public String printEvaluationResult(MyEvaluationResult result) throws DebugException {
@@ -172,13 +174,15 @@ public class DebuggerMagic {
 
 		IJavaValue value = result.getValue();
 		JavaDetailFormattersManager man = JavaDetailFormattersManager.getDefault();
-		ValueDetailPromise detail = new ValueDetailPromise();
 
 		// ASSUME last thread is suspended.
 
 		IThread[] threads = launch.getDebugTarget().getThreads();
-		man.computeValueDetail(value, (IJavaThread) threads[threads.length - 1], detail);
-		return detail.await();
+		IJavaThread suspended = (IJavaThread) threads[threads.length - 1];
+
+		Promise detail = new Promise(IValueDetailListener.class);
+		man.computeValueDetail(value, suspended, (IValueDetailListener) detail.callback());
+		return (String) detail.await()[1];
 	}
 
 	private String printEvaluationErrors(MyEvaluationResult result) {
@@ -193,56 +197,6 @@ public class DebuggerMagic {
 			buf.append('\n');
 		}
 		return buf.toString();
-	}
-
-}
-
-// XXX could we use a dynamic proxy to create these classes? ^^
-
-class EvaluationPromise implements IEvaluationListener {
-
-	CountDownLatch hasResult = new CountDownLatch(1);
-	private IEvaluationResult result;
-
-	@Override
-	public void evaluationComplete(IEvaluationResult result) {
-		this.result = result;
-		hasResult.countDown();
-	}
-
-	public IEvaluationResult await() {
-		while (result == null) {
-			try {
-				hasResult.await();
-			} catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
-			}
-		}
-		return result;
-	}
-
-}
-
-class ValueDetailPromise implements IValueDetailListener {
-
-	CountDownLatch hasResult = new CountDownLatch(1);
-	private String result;
-
-	@Override
-	public void detailComputed(IValue value, String result) {
-		this.result = result;
-		hasResult.countDown();
-	}
-
-	public String await() {
-		while (result == null) {
-			try {
-				hasResult.await();
-			} catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
-			}
-		}
-		return result;
 	}
 
 }
