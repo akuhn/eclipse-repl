@@ -75,6 +75,9 @@ public class DebuggerMagic {
 					// it the same way.
 
 					launch.getDebugTarget().breakpointAdded(bp);
+					// ((JDIDebugTarget)
+					// launch.getDebugTarget()).getEventDispatcher().addJDIEventListener(listener,
+					// request)
 
 					IJavaDebugTarget target = (IJavaDebugTarget) launch.getDebugTarget();
 					eval = new MyEvaluationEngine(myJavaProject, target);
@@ -145,6 +148,12 @@ public class DebuggerMagic {
 		IThread[] threads = launch.getDebugTarget().getThreads();
 		// XXX Assuming that the last frame is suspended on our breakpoint.
 		IJavaStackFrame frame = (IJavaStackFrame) threads[threads.length - 1].getTopStackFrame();
+		// XXX wait for breakpoint
+		// TODO we should use a listener to do this!
+		if (frame == null) {
+			Thread.sleep(500);
+			frame = (IJavaStackFrame) threads[threads.length - 1].getTopStackFrame();
+		}
 		IEvaluationListener callback = new IEvaluationListener() {
 			@Override
 			public void evaluationComplete(final IEvaluationResult result) {
