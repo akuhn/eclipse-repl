@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
@@ -122,12 +123,13 @@ public class MyEvaluationEngine implements IEvaluationEngine {
 				vars.put(localsVar[i].getName(), localsVar[i]);
 			}
 		}
-		if (internalVariables != null) vars.putAll(internalVariables);
 		// to solve and remove
 		// ******
 
-		String[] localTypesNames = new String[vars.size()];
+		if (internalVariables != null) vars.putAll(internalVariables);
+
 		String[] localVariables = new String[vars.size()];
+		String[] localTypesNames = new String[vars.size()];
 		int i = 0;
 		for (String each: vars.keySet()) {
 			localVariables[i] = each;
@@ -377,6 +379,13 @@ public class MyEvaluationEngine implements IEvaluationEngine {
 
 	private void myStoreInternalVariablesInResult(MyEvaluationResult result, Interpreter interpreter) {
 		internalVariables = BullshitFree.getField(interpreter, "fInternalVariables");
+
+		// Remove synthetic variables created by foreach loop
+		Iterator<String> it = internalVariables.keySet().iterator();
+		while (it.hasNext()) {
+			if (it.next().startsWith("#")) it.remove();
+		}
+
 		result.internalVariables = internalVariables;
 	}
 
