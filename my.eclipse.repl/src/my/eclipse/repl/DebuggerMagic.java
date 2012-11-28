@@ -30,6 +30,7 @@ import org.eclipse.jdt.debug.eval.IEvaluationListener;
 import org.eclipse.jdt.internal.debug.core.breakpoints.JavaMethodBreakpoint;
 import org.eclipse.jdt.internal.debug.core.model.JDIThread;
 import org.eclipse.jdt.internal.debug.ui.JavaDetailFormattersManager;
+import org.eclipse.jdt.internal.debug.ui.contentassist.IJavaDebugContentAssistContext;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.IVMRunner;
 import org.eclipse.jdt.launching.JavaRuntime;
@@ -51,16 +52,10 @@ public class DebuggerMagic {
 	private MyEvaluationEngine eval;
 
 	public DebuggerMagic() {
-		try {
-			initializeMagic();
-		} catch (Exception exception) {
-			throw new BullshitFree(exception);
-		}
+		myJavaProject = anyJavaProject();
 	}
 
 	private void initializeMagic() throws Exception {
-
-		myJavaProject = anyJavaProject();
 
 		IVMInstall vmInstall = JavaRuntime.getVMInstall(myJavaProject);
 		if (vmInstall == null) vmInstall = JavaRuntime.getDefaultVMInstall();
@@ -132,6 +127,11 @@ public class DebuggerMagic {
 	}
 
 	public String evaluate(String expression) {
+		if (eval == null) try {
+			initializeMagic();
+		} catch (Exception exception) {
+			throw new BullshitFree(exception);
+		}
 		assert expression != null;
 		if (IMPORT.matcher(expression).matches()) {
 			eval.imports.add(expression);
@@ -152,15 +152,13 @@ public class DebuggerMagic {
 	private static Pattern IMPORT = Pattern.compile("import\\s+(static\\s+)?\\w+(\\.\\w+)*(\\.\\*)?;");
 
 	private String evaluateStuff(String expression) throws DebugException, InterruptedException {
-		isSuspended.await();
-
 		IJavaStackFrame frame = (IJavaStackFrame) getSuspendedThread().getTopStackFrame();
 		Promise result = new Promise(IEvaluationListener.class);
 		eval.evaluateExpression(expression, frame, (IEvaluationListener) result.callback());
 		return printEvaluationResult((MyEvaluationResult) result.await()[0]);
 	}
 
-	public String printEvaluationResult(MyEvaluationResult result) throws DebugException {
+	private String printEvaluationResult(MyEvaluationResult result) throws DebugException, InterruptedException {
 		if (result.hasErrors()) return printEvaluationErrors(result);
 
 		IJavaValue value = result.getValue();
@@ -185,12 +183,17 @@ public class DebuggerMagic {
 		return buf.toString();
 	}
 
-	private IJavaThread getSuspendedThread() throws DebugException {
+	private IJavaThread getSuspendedThread() throws DebugException, InterruptedException {
+		isSuspended.await();
 		IThread[] threads = launch.getDebugTarget().getThreads();
 		for (int i = 0; i < threads.length; i++) {
 			if (threads[i].isSuspended()) return (IJavaThread) threads[i];
 		}
 		throw new IllegalStateException();
+	}
+
+	public IJavaDebugContentAssistContext getContext() {
+		return new MyContentAssistContext(myJavaProject);
 	}
 
 }

@@ -15,6 +15,9 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jdt.internal.debug.ui.contentassist.JavaDebugContentAssistProcessor;
+import org.eclipse.jdt.internal.debug.ui.display.DisplayViewerConfiguration;
+import org.eclipse.jface.text.contentassist.IContentAssistProcessor;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
@@ -31,10 +34,7 @@ final class ReadEvaluatePrintLoop {
 		this.in = in;
 		this.out = new PrintStream(out);
 		this.history = new History();
-	}
-
-	private void initialize() {
-		magic = new DebuggerMagic();
+		this.magic = new DebuggerMagic();
 	}
 
 	public void readEvaluatePrint() {
@@ -42,7 +42,6 @@ final class ReadEvaluatePrintLoop {
 			out.print(">> ");
 			String line = new BufferedReader(new InputStreamReader(in)).readLine();
 			history.add(line);
-			if (magic == null) initialize();
 			String result = magic.evaluate(line);
 			out.print("=> ");
 			out.println(result);
@@ -116,7 +115,12 @@ final class ReadEvaluatePrintLoop {
 
 	public void connect(ConsoleViewer viewer) {
 		viewer.getTextWidget().addKeyListener(asKeyListener(viewer));
-
+		viewer.configure(new DisplayViewerConfiguration() {
+			@Override
+			public IContentAssistProcessor getContentAssistantProcessor() {
+				return new JavaDebugContentAssistProcessor(magic.getContext());
+			}
+		});
 	}
 
 }

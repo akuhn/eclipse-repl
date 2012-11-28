@@ -22,48 +22,9 @@ class ConsoleViewer extends JDISourceViewer {
 
 	private BlockingInputStream in = new BlockingInputStream();
 
-	private OutputStream out = new OutputStream() {
-
-		@Override
-		public void write(byte[] b) throws IOException {
-			buf.append(new String(b));
-			job.schedule(50);
-		}
-
-		@Override
-		public void write(byte[] b, int off, int len) throws IOException {
-			buf.append(new String(b, off, len));
-			job.schedule(50);
-		}
-
-		@Override
-		public void write(int b) throws IOException {
-			buf.append(new String(new byte[] { (byte) b }));
-			job.schedule(50);
-		}
-
-	};
-
-	UIJob job = new UIJob("Console Output Stream") {
-		@Override
-		public IStatus runInUIThread(IProgressMonitor monitor) {
-			try {
-				String output = buf.toString();
-				IDocument doc = getDocument();
-				doc.replace(doc.getLength(), 0, output);
-				buf.setLength(0); // TODO shrink if grown too large
-				mark = doc.getLength();
-				getTextWidget().invokeAction(ST.TEXT_END);
-			} catch (BadLocationException exception) {
-				throw new BullshitFree(exception);
-			}
-			return Status.OK_STATUS;
-		}
-	};
-
 	private int mark = 0;
 
-	StringBuilder buf = new StringBuilder();
+	private StringBuilder buf = new StringBuilder();
 
 	public ConsoleViewer(Composite parent) {
 		super(parent, null, SWT.V_SCROLL | SWT.H_SCROLL);
@@ -124,8 +85,52 @@ class ConsoleViewer extends JDISourceViewer {
 		return out;
 	}
 
+	private void resetAndMaybeShrink() {
+		buf.setLength(0);
+		if (buf.capacity() > 8000) buf = new StringBuilder();
+	}
+
 	private static boolean isLineBreak(VerifyEvent event) {
 		return event.text.indexOf('\n') >= 0 || event.text.indexOf('\r') >= 0;
 	}
+
+	private OutputStream out = new OutputStream() {
+
+		@Override
+		public void write(byte[] b) throws IOException {
+			buf.append(new String(b));
+			job.schedule(50);
+		}
+
+		@Override
+		public void write(byte[] b, int off, int len) throws IOException {
+			buf.append(new String(b, off, len));
+			job.schedule(50);
+		}
+
+		@Override
+		public void write(int b) throws IOException {
+			buf.append(new String(new byte[] { (byte) b }));
+			job.schedule(50);
+		}
+
+	};
+
+	private UIJob job = new UIJob("Console Output Stream") {
+		@Override
+		public IStatus runInUIThread(IProgressMonitor monitor) {
+			try {
+				String output = buf.toString();
+				IDocument doc = getDocument();
+				doc.replace(doc.getLength(), 0, output);
+				resetAndMaybeShrink();
+				mark = doc.getLength();
+				getTextWidget().invokeAction(ST.TEXT_END);
+			} catch (BadLocationException exception) {
+				throw new BullshitFree(exception);
+			}
+			return Status.OK_STATUS;
+		}
+	};
 
 }
