@@ -102,13 +102,6 @@ public class DebuggerMagic {
 	}
 
 	private IJavaProject anyJavaProject() {
-		// XXX works in UI thread only!
-		// ISelectionService window =
-		// PlatformUI.getWorkbench().getActiveWorkbenchWindow().getSelectionService();
-		// IStructuredSelection sel = (IStructuredSelection)
-		// window.getSelection("org.eclipse.jdt.ui.PackageExplorer");
-		// if (sel != null && !sel.isEmpty()) return ((IJavaElement)
-		// sel.iterator().next()).getJavaProject();
 		for (IProject each: ResourcesPlugin.getWorkspace().getRoot().getProjects()) {
 			IJavaProject p = JavaCore.create(each);
 			if (p != null) return p;
@@ -158,12 +151,9 @@ public class DebuggerMagic {
 	private static Pattern IMPORT = Pattern.compile("import\\s+(static\\s+)?\\w+(\\.\\w+)*(\\.\\*)?;");
 
 	private String evaluateStuff(String expression) throws DebugException, InterruptedException {
-		IThread[] threads = launch.getDebugTarget().getThreads();
 		isSuspended.await();
 
-		// ASSUME last thread is suspended.
-
-		IJavaStackFrame frame = (IJavaStackFrame) threads[threads.length - 1].getTopStackFrame();
+		IJavaStackFrame frame = (IJavaStackFrame) getSuspendedThread().getTopStackFrame();
 		Promise result = new Promise(IEvaluationListener.class);
 		eval.evaluateExpression(expression, frame, (IEvaluationListener) result.callback());
 		return printEvaluationResult((MyEvaluationResult) result.await()[0]);
@@ -175,13 +165,8 @@ public class DebuggerMagic {
 		IJavaValue value = result.getValue();
 		JavaDetailFormattersManager man = JavaDetailFormattersManager.getDefault();
 
-		// ASSUME last thread is suspended.
-
-		IThread[] threads = launch.getDebugTarget().getThreads();
-		IJavaThread suspended = (IJavaThread) threads[threads.length - 1];
-
 		Promise detail = new Promise(IValueDetailListener.class);
-		man.computeValueDetail(value, suspended, (IValueDetailListener) detail.callback());
+		man.computeValueDetail(value, getSuspendedThread(), (IValueDetailListener) detail.callback());
 		return (String) detail.await()[1];
 	}
 
@@ -197,6 +182,14 @@ public class DebuggerMagic {
 			buf.append('\n');
 		}
 		return buf.toString();
+	}
+
+	private IJavaThread getSuspendedThread() throws DebugException {
+		IThread[] threads = launch.getDebugTarget().getThreads();
+		for (int i = 0; i < threads.length; i++) {
+			if (threads[i].isSuspended()) return (IJavaThread) threads[i];
+		}
+		throw new IllegalStateException();
 	}
 
 }

@@ -1,10 +1,13 @@
 package my.eclipse.repl.util;
 
-import java.io.IOException;
+import static org.junit.Assert.assertEquals;
+
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.concurrent.CountDownLatch;
+
+import org.junit.Test;
 
 public class Promise {
 
@@ -19,7 +22,10 @@ public class Promise {
 				if (method.getDeclaringClass() == Object.class) { return method.invoke(this, args); }
 				Promise.this.args = args;
 				hasResult.countDown();
-				return null; // ASSUME return type is not primitive
+				// if (method.getReturnType() == Void.TYPE) return null;
+				if (method.getReturnType() == Boolean.class) return false;
+				if (method.getReturnType().isPrimitive()) return 0;
+				return null;
 			}
 		});
 	}
@@ -43,42 +49,45 @@ public class Promise {
 		}
 	}
 
-	public static void main(String[] args) throws IOException {
+	public static class Examples {
 
-		AsynchronousAPI api = new AsynchronousAPI();
-		Promise result = new Promise(Callback.class);
+		@Test
+		public void shouldWaitForCallback() {
 
-		api.method((Callback) result.callback());
-		String string = (String) result.await()[0];
+			AsynchronousAPI api = new AsynchronousAPI();
+			Promise result = new Promise(Listener.class);
 
-		System.out.println(string);
+			api.method((Listener) result.callback());
+			String string = (String) result.await()[0];
 
-	}
+			assertEquals(string, "Hello, worlds!");
 
-}
+		}
 
-interface Callback {
+		class AsynchronousAPI {
 
-	void callback(String result);
-
-}
-
-class AsynchronousAPI {
-
-	public void method(final Callback callback) {
-		new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-				try {
-					Thread.sleep(500);
-				} catch (InterruptedException ex) {
-					Thread.currentThread().interrupt();
-				}
-				callback.callback("Hello, worlds!");
+			public void method(final Listener listener) {
+				new Thread(new Runnable() {
+					@Override
+					public void run() {
+						try {
+							Thread.sleep(500);
+						} catch (InterruptedException ex) {
+							Thread.currentThread().interrupt();
+						}
+						listener.notify("Hello, worlds!");
+					}
+				}).run();
 			}
 
-		}).run();
+		}
+
+		interface Listener {
+
+			void notify(String result);
+
+		}
+
 	}
 
 }
