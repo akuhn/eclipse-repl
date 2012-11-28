@@ -13,7 +13,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.jdt.internal.debug.ui.contentassist.JavaDebugContentAssistProcessor;
 import org.eclipse.jface.text.contentassist.IContentAssistProcessor;
 
 public final class ReadEvaluatePrintLoop {
@@ -90,7 +89,7 @@ public final class ReadEvaluatePrintLoop {
 	}
 
 	public IContentAssistProcessor getContentAssitentProvide() {
-		return new JavaDebugContentAssistProcessor(magic.getContext());
+		return magic.getContentAssistProcessor();
 	}
 
 }

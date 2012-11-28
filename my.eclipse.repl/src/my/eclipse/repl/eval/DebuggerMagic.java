@@ -31,7 +31,6 @@ import org.eclipse.jdt.debug.eval.IEvaluationListener;
 import org.eclipse.jdt.internal.debug.core.breakpoints.JavaMethodBreakpoint;
 import org.eclipse.jdt.internal.debug.core.model.JDIThread;
 import org.eclipse.jdt.internal.debug.ui.JavaDetailFormattersManager;
-import org.eclipse.jdt.internal.debug.ui.contentassist.IJavaDebugContentAssistContext;
 import org.eclipse.jdt.launching.IVMInstall;
 import org.eclipse.jdt.launching.IVMRunner;
 import org.eclipse.jdt.launching.JavaRuntime;
@@ -46,7 +45,7 @@ import com.sun.jdi.event.Event;
  */
 public class DebuggerMagic {
 
-	private static final String MAIN_CLASS_NAME = "my.eclipse.repl.eval.MyMainClass";
+	private static final String MAIN_CLASS_NAME = "my.eclipse.repl.eval.MacGuffin";
 
 	private IJavaProject myJavaProject;
 	private Launch launch;
@@ -193,8 +192,8 @@ public class DebuggerMagic {
 		throw new IllegalStateException();
 	}
 
-	public IJavaDebugContentAssistContext getContext() {
-		return new MyContentAssistContext(myJavaProject);
+	public MyContentAssistProcessor getContentAssistProcessor() {
+		return new MyContentAssistProcessor(myJavaProject);
 	}
 
 }

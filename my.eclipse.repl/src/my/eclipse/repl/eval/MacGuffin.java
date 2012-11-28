@@ -1,6 +1,6 @@
 package my.eclipse.repl.eval;
 
-public class MyMainClass {
+public class MacGuffin {
 
 	public static void main(String[] args) {
 
