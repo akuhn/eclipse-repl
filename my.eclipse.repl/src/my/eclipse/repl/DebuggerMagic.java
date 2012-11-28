@@ -103,6 +103,7 @@ public class DebuggerMagic {
 
 	private IJavaProject anyJavaProject() {
 		for (IProject each: ResourcesPlugin.getWorkspace().getRoot().getProjects()) {
+			if (!each.isOpen()) continue;
 			IJavaProject p = JavaCore.create(each);
 			if (p != null) return p;
 		}

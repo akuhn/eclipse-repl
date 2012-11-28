@@ -75,7 +75,7 @@ class ConsoleViewer extends JDISourceViewer {
 			@Override
 			public void verifyText(VerifyEvent event) {
 				try {
-					if (event.text.equals("\n")) {
+					if (isLineBreak(event)) {
 						appendAtTheEnd(event.text);
 						String input = advanceMark();
 						in.append(input);
@@ -122,6 +122,10 @@ class ConsoleViewer extends JDISourceViewer {
 
 	public OutputStream getOutputStream() {
 		return out;
+	}
+
+	private static boolean isLineBreak(VerifyEvent event) {
+		return event.text.indexOf('\n') >= 0 || event.text.indexOf('\r') >= 0;
 	}
 
 }
