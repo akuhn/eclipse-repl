@@ -3,6 +3,8 @@ package my.eclipse.repl.views;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import my.eclipse.repl.eval.ReadEvaluatePrintLoop;
+
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.IHandler;

@@ -1,4 +1,4 @@
-package my.eclipse.repl.views;
+package my.eclipse.repl.util;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,7 +13,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @author Adrian Kuhn
  * 
  */
-class BlockingInputStream extends InputStream {
+public class BlockingInputStream extends InputStream {
 
 	Lock lock = new ReentrantLock();
 	Condition isAvailable = lock.newCondition();

@@ -1,4 +1,4 @@
-package my.eclipse.repl.views;
+package my.eclipse.repl.eval;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -9,8 +9,6 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import my.eclipse.repl.DebuggerMagic;
-
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -18,7 +16,7 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.internal.debug.ui.contentassist.JavaDebugContentAssistProcessor;
 import org.eclipse.jface.text.contentassist.IContentAssistProcessor;
 
-final class ReadEvaluatePrintLoop {
+public final class ReadEvaluatePrintLoop {
 
 	public final History history;
 

@@ -1,4 +1,4 @@
-package my.eclipse.repl;
+package my.eclipse.repl.eval;
 
 import java.util.Collection;
 

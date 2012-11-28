@@ -3,6 +3,7 @@ package my.eclipse.repl.views;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import my.eclipse.repl.util.BlockingInputStream;
 import my.eclipse.repl.util.BullshitFree;
 
 import org.eclipse.core.runtime.IProgressMonitor;

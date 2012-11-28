@@ -1,4 +1,4 @@
-package my.eclipse.repl;
+package my.eclipse.repl.eval;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jdt.core.IJavaProject;

@@ -1,4 +1,4 @@
-package my.eclipse.repl;
+package my.eclipse.repl.eval;
 
 import java.io.IOException;
 import java.net.URL;
@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.regex.Pattern;
 
+import my.eclipse.repl.Activator;
 import my.eclipse.repl.util.BullshitFree;
 import my.eclipse.repl.util.Promise;
 import my.eclipse.repl.util.StringList;
@@ -45,7 +46,7 @@ import com.sun.jdi.event.Event;
  */
 public class DebuggerMagic {
 
-	private static final String MAIN_CLASS_NAME = "my.eclipse.repl.Main";
+	private static final String MAIN_CLASS_NAME = "my.eclipse.repl.eval.MyMainClass";
 
 	private IJavaProject myJavaProject;
 	private Launch launch;
