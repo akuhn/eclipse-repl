@@ -16,19 +16,15 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jdt.internal.debug.ui.contentassist.JavaDebugContentAssistProcessor;
-import org.eclipse.jdt.internal.debug.ui.display.DisplayViewerConfiguration;
 import org.eclipse.jface.text.contentassist.IContentAssistProcessor;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.KeyEvent;
-import org.eclipse.swt.events.KeyListener;
 
 final class ReadEvaluatePrintLoop {
 
-	private DebuggerMagic magic;
+	public final History history;
 
+	private DebuggerMagic magic;
 	private InputStream in;
 	private PrintStream out;
-	private History history;
 
 	public ReadEvaluatePrintLoop(InputStream in, OutputStream out, OutputStream err) {
 		this.in = in;
@@ -72,55 +68,31 @@ final class ReadEvaluatePrintLoop {
 		}
 	}
 
-	class History {
+	public class History {
 
-		private List<String> list = new ArrayList();
+		private List<String> history = new ArrayList();
 		private int index = 0;
 
-		public void add(String line) {
-			list.add(line);
-			index = list.size();
+		private void add(String line) {
+			history.add(line);
+			index = history.size();
 		}
 
 		public String previous() {
 			if (index > 0) index--;
-			return list.get(index);
+			return history.get(index);
 		}
 
 		public String next() {
-			if (index < list.size()) index++;
-			if (index == list.size()) return "";
-			return list.get(index);
+			if (index < history.size()) index++;
+			if (index == history.size()) return "";
+			return history.get(index);
 		}
 
 	}
 
-	public KeyListener asKeyListener(final ConsoleViewer viewer) {
-		return new KeyListener() {
-
-			@Override
-			public void keyPressed(KeyEvent e) {
-				if (e.keyCode == SWT.ARROW_UP || e.keyCode == SWT.ARROW_DOWN) {
-					String line = e.keyCode == SWT.ARROW_UP ? history.previous() : history.next();
-					viewer.replaceLastLine(line);
-				}
-			}
-
-			@Override
-			public void keyReleased(KeyEvent e) {
-			}
-
-		};
-	}
-
-	public void connect(ConsoleViewer viewer) {
-		viewer.getTextWidget().addKeyListener(asKeyListener(viewer));
-		viewer.configure(new DisplayViewerConfiguration() {
-			@Override
-			public IContentAssistProcessor getContentAssistantProcessor() {
-				return new JavaDebugContentAssistProcessor(magic.getContext());
-			}
-		});
+	public IContentAssistProcessor getContentAssitentProvide() {
+		return new JavaDebugContentAssistProcessor(magic.getContext());
 	}
 
 }

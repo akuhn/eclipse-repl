@@ -7,9 +7,14 @@ import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.IHandler;
 import org.eclipse.jdt.internal.debug.ui.JDIDebugUIPlugin;
+import org.eclipse.jdt.internal.debug.ui.display.DisplayViewerConfiguration;
 import org.eclipse.jdt.ui.text.JavaTextTools;
 import org.eclipse.jface.text.Document;
+import org.eclipse.jface.text.contentassist.IContentAssistProcessor;
 import org.eclipse.jface.text.source.ISourceViewer;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.VerifyKeyListener;
+import org.eclipse.swt.events.VerifyEvent;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
@@ -32,11 +37,10 @@ public class JavaConsoleView extends ViewPart {
 	@Override
 	public void createPartControl(Composite parent) {
 		viewer = new ConsoleViewer(parent);
-		configureSourceViewer(viewer);
 		InputStream in = viewer.getInputStream();
 		OutputStream out = viewer.getOutputStream();
 		repl = new ReadEvaluatePrintLoop(in, out, out);
-		repl.connect(viewer);
+		configureViewer(viewer, repl);
 		repl.asJob().schedule();
 	}
 
@@ -52,12 +56,29 @@ public class JavaConsoleView extends ViewPart {
 		super.dispose();
 	}
 
-	private void configureSourceViewer(ISourceViewer viewer) {
+	private void configureViewer(ISourceViewer viewer, ReadEvaluatePrintLoop repl2) {
 		Document doc = new Document();
 		viewer.setDocument(doc);
 		JavaTextTools tools = JDIDebugUIPlugin.getDefault().getJavaTextTools();
 		tools.setupJavaDocumentPartitioner(doc);
+		configureHistoryKeyListener();
+		configureContentAssistant();
 		activateHandler();
+	}
+
+	private void configureHistoryKeyListener() {
+		viewer.appendVerifyKeyListener(new VerifyKeyListener() {
+			@Override
+			public void verifyKey(VerifyEvent e) {
+				if (e.keyCode == SWT.ARROW_UP || e.keyCode == SWT.ARROW_DOWN) {
+					boolean down = e.keyCode == SWT.ARROW_DOWN;
+					String line = down ? repl.history.next() : repl.history.previous();
+					viewer.replaceLastLine(line);
+					e.doit = false;
+				}
+			}
+
+		});
 	}
 
 	private void activateHandler() {
@@ -74,6 +95,15 @@ public class JavaConsoleView extends ViewPart {
 
 	private void deactiveHandler() {
 		service.deactivateHandler(activation);
+	}
+
+	private void configureContentAssistant() {
+		viewer.configure(new DisplayViewerConfiguration() {
+			@Override
+			public IContentAssistProcessor getContentAssistantProcessor() {
+				return repl.getContentAssitentProvide();
+			}
+		});
 	}
 
 }
