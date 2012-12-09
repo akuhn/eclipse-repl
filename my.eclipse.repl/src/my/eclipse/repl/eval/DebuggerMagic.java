@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.regex.Pattern;
 
-import my.eclipse.repl.Activator;
+import my.eclipse.repl.Plugin;
 import my.eclipse.repl.util.BullshitFree;
 import my.eclipse.repl.util.Promise;
 import my.eclipse.repl.util.StringList;
@@ -16,6 +16,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.debug.core.DebugException;
+import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.core.Launch;
 import org.eclipse.debug.core.model.IThread;
@@ -66,8 +67,15 @@ public class DebuggerMagic {
 		VMRunnerConfiguration config = new VMRunnerConfiguration(MAIN_CLASS_NAME, classPath);
 		launch = new Launch(null, ILaunchManager.DEBUG_MODE, null);
 
+		// TODO figure out which attributes and stuff in launch we're missing
+		// for correct display in the debugger's launch view!
+
+		DebugPlugin.getDefault().getLaunchManager().addLaunch(launch);
+
 		IJavaMethodBreakpoint bp = createMagicBreakpoint();
 		vmRunner.run(config, launch, null);
+
+		// TODO capture output from launch's process here
 
 		// XXX Apparently we have to rely on the fact that things
 		// are slow and set the breakpoint after the configuration
@@ -87,7 +95,7 @@ public class DebuggerMagic {
 			throw new BullshitFree(exception);
 		}
 		try {
-			URL entry = Activator.getContext().getBundle().getEntry("bin");
+			URL entry = Plugin.getContext().getBundle().getEntry("bin");
 			String string = FileLocator.toFileURL(entry).getFile();
 			path.add(string);
 		} catch (IOException exception) {

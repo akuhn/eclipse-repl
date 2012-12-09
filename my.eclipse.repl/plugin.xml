@@ -70,5 +70,16 @@
          </view>
       </perspectiveExtension>
    </extension>
+   <extension
+         point="org.eclipse.ui.editors">
+      <editor
+            class="my.eclipse.repl.views.JavaConsoleEditor"
+            contributorClass="org.eclipse.ui.texteditor.BasicTextEditorActionContributor"
+            extensions=""
+            icon="icons/sample.gif"
+            id="my.eclipse.repl.editors.JavaConsoleEditor"
+            name="Java REPL as Editor">
+      </editor>
+   </extension>
 
 </plugin>
