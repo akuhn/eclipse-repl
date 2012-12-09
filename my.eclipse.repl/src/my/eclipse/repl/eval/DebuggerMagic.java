@@ -48,17 +48,21 @@ public class DebuggerMagic {
 
 	private static final String MAIN_CLASS_NAME = "my.eclipse.repl.eval.MacGuffin";
 
-	private IJavaProject myJavaProject;
+	private IJavaProject project;
 	private Launch launch;
 	private MyEvaluationEngine eval;
 
+	public DebuggerMagic(IJavaProject project) {
+		this.project = project;
+	}
+
 	public DebuggerMagic() {
-		myJavaProject = anyJavaProject();
+		this(anyJavaProject());
 	}
 
 	private void initializeMagic() throws Exception {
 
-		IVMInstall vmInstall = JavaRuntime.getVMInstall(myJavaProject);
+		IVMInstall vmInstall = JavaRuntime.getVMInstall(project);
 		if (vmInstall == null) vmInstall = JavaRuntime.getDefaultVMInstall();
 		if (vmInstall == null) return;
 		IVMRunner vmRunner = vmInstall.getVMRunner(ILaunchManager.DEBUG_MODE);
@@ -84,13 +88,13 @@ public class DebuggerMagic {
 
 		launch.getDebugTarget().breakpointAdded(bp);
 		IJavaDebugTarget target = (IJavaDebugTarget) launch.getDebugTarget();
-		eval = new MyEvaluationEngine(myJavaProject, target);
+		eval = new MyEvaluationEngine(project, target);
 	}
 
 	private String[] computeCustomClassPath() {
 		StringList path = new StringList();
 		try {
-			path.add(JavaRuntime.computeDefaultRuntimeClassPath(myJavaProject));
+			path.add(JavaRuntime.computeDefaultRuntimeClassPath(project));
 		} catch (CoreException exception) {
 			throw new BullshitFree(exception);
 		}
@@ -104,7 +108,7 @@ public class DebuggerMagic {
 		return path.asArray();
 	}
 
-	private IJavaProject anyJavaProject() {
+	private static IJavaProject anyJavaProject() {
 		for (IProject each: ResourcesPlugin.getWorkspace().getRoot().getProjects()) {
 			if (!each.isOpen()) continue;
 			IJavaProject p = JavaCore.create(each);
@@ -201,7 +205,7 @@ public class DebuggerMagic {
 	}
 
 	public MyContentAssistProcessor getContentAssistProcessor() {
-		return new MyContentAssistProcessor(myJavaProject);
+		return new MyContentAssistProcessor(project);
 	}
 
 }

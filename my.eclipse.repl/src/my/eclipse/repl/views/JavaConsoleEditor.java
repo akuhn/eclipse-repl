@@ -1,5 +1,7 @@
 package my.eclipse.repl.views;
 
+import my.eclipse.repl.eval.MagicFactory;
+
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IEditorInput;
@@ -15,7 +17,12 @@ public class JavaConsoleEditor extends EditorPart {
 
 	@Override
 	public void createPartControl(Composite parent) {
-		part = new JavaConsolePart();
+		MagicFactory factory = null;
+		IEditorInput input = getEditorInput();
+		if (input instanceof MagicFactory) {
+			factory = (MagicFactory) input;
+		}
+		part = new JavaConsolePart(factory);
 		part.createPartControl(parent);
 	}
 

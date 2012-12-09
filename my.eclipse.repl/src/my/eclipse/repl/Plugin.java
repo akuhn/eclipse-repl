@@ -2,9 +2,11 @@ package my.eclipse.repl;
 
 import my.eclipse.repl.util.BullshitFree;
 import my.eclipse.repl.views.JavaConsoleEditor;
+import my.eclipse.repl.views.REPLEditorInput;
 import my.eclipse.repl.views.StringEditorInput;
 
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
@@ -42,6 +44,21 @@ public class Plugin extends AbstractUIPlugin {
 				try {
 					IWorkbenchPage page = getWorkbench().getActiveWorkbenchWindow().getActivePage();
 					page.openEditor(new StringEditorInput("Hello, worlds!"), JavaConsoleEditor.ID);
+				} catch (PartInitException exception) {
+					throw new BullshitFree(exception);
+				}
+			}
+		});
+	}
+
+	public void openEditorREPL(Object element) {
+		final IEditorInput input = new REPLEditorInput(element);
+		Display.getDefault().asyncExec(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					IWorkbenchPage page = getWorkbench().getActiveWorkbenchWindow().getActivePage();
+					page.openEditor(input, JavaConsoleEditor.ID);
 				} catch (PartInitException exception) {
 					throw new BullshitFree(exception);
 				}

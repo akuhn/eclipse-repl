@@ -3,6 +3,7 @@ package my.eclipse.repl.views;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import my.eclipse.repl.eval.MagicFactory;
 import my.eclipse.repl.eval.ReadEvaluatePrintLoop;
 
 import org.eclipse.core.commands.AbstractHandler;
@@ -26,17 +27,27 @@ import org.eclipse.ui.texteditor.ITextEditorActionDefinitionIds;
 
 public class JavaConsolePart {
 
+	private MagicFactory factory;
+
 	private ConsoleViewer viewer;
 	private ReadEvaluatePrintLoop repl;
 
 	private IHandlerService service;
 	private IHandlerActivation activation;
 
+	public JavaConsolePart() {
+		this(null);
+	}
+
+	public JavaConsolePart(MagicFactory factory) {
+		this.factory = factory;
+	}
+
 	public void createPartControl(Composite parent) {
 		viewer = new ConsoleViewer(parent);
 		InputStream in = viewer.getInputStream();
 		OutputStream out = viewer.getOutputStream();
-		repl = new ReadEvaluatePrintLoop(in, out, out);
+		repl = new ReadEvaluatePrintLoop(factory.makeMagic(), in, out, out);
 		configureViewer(viewer, repl);
 		repl.asJob().schedule();
 	}

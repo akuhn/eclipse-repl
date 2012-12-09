@@ -24,10 +24,14 @@ public final class ReadEvaluatePrintLoop {
 	private PrintStream out;
 
 	public ReadEvaluatePrintLoop(InputStream in, OutputStream out, OutputStream err) {
+		this(null, in, out, err);
+	}
+
+	public ReadEvaluatePrintLoop(DebuggerMagic magic, InputStream in, OutputStream out, OutputStream err) {
 		this.in = in;
 		this.out = new PrintStream(out);
 		this.history = new History();
-		this.magic = new DebuggerMagic();
+		this.magic = magic == null ? new DebuggerMagic() : magic;
 	}
 
 	public void readEvaluatePrint() {
