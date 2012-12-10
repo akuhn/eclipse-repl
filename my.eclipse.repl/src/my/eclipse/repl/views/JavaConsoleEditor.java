@@ -1,6 +1,9 @@
 package my.eclipse.repl.views;
 
-import my.eclipse.repl.eval.MagicFactory;
+import java.util.ArrayList;
+import java.util.List;
+
+import my.eclipse.repl.eval.EvaluationListener;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.swt.widgets.Composite;
@@ -14,22 +17,37 @@ public class JavaConsoleEditor extends EditorPart {
 	public static final String ID = "my.eclipse.repl.editors.JavaConsoleEditor";
 
 	private JavaConsolePart part;
+	private ExampleContext context;
+
+	private List data = new ArrayList();
+	private boolean dirty;
 
 	@Override
 	public void createPartControl(Composite parent) {
-		MagicFactory factory = null;
 		IEditorInput input = getEditorInput();
-		if (input instanceof MagicFactory) {
-			factory = (MagicFactory) input;
-		}
-		part = new JavaConsolePart(factory);
+		context = input instanceof ExampleContext ? (ExampleContext) input : null;
+		part = new JavaConsolePart(context);
 		part.createPartControl(parent);
+		part.getREPL().addEvaluationListener(new EvaluationListener() {
+
+			@Override
+			public void notify(String expression, String result) {
+				if (dirty == false) {
+					dirty = true;
+					firePropertyChange(PROP_DIRTY);
+				}
+				data.add(new String[] { expression, result });
+			}
+		});
 	}
 
 	@Override
 	public void doSave(IProgressMonitor monitor) {
-		// TODO Auto-generated method stub
-
+		ExampleGenerator gen = new ExampleGenerator(context);
+		gen.generateExampleWith(data);
+		data.clear();
+		dirty = false;
+		firePropertyChange(PROP_DIRTY);
 	}
 
 	@Override
@@ -46,14 +64,12 @@ public class JavaConsoleEditor extends EditorPart {
 
 	@Override
 	public boolean isDirty() {
-		// TODO Auto-generated method stub
-		return false;
+		return dirty;
 	}
 
 	@Override
 	public boolean isSaveAsAllowed() {
-		// TODO Auto-generated method stub
-		return false;
+		return true;
 	}
 
 	@Override

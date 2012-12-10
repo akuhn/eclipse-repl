@@ -1,8 +1,8 @@
 package my.eclipse.repl;
 
 import my.eclipse.repl.util.BullshitFree;
+import my.eclipse.repl.views.ExampleContext;
 import my.eclipse.repl.views.JavaConsoleEditor;
-import my.eclipse.repl.views.REPLEditorInput;
 import my.eclipse.repl.views.StringEditorInput;
 
 import org.eclipse.swt.widgets.Display;
@@ -52,7 +52,7 @@ public class Plugin extends AbstractUIPlugin {
 	}
 
 	public void openEditorREPL(Object element) {
-		final IEditorInput input = new REPLEditorInput(element);
+		final IEditorInput input = new ExampleContext(element);
 		Display.getDefault().asyncExec(new Runnable() {
 			@Override
 			public void run() {

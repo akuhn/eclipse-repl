@@ -3,17 +3,20 @@ package my.eclipse.repl.views;
 import my.eclipse.repl.eval.DebuggerMagic;
 import my.eclipse.repl.eval.MagicFactory;
 
+import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
+import org.eclipse.jdt.core.IMember;
+import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IPersistableElement;
 
-public class REPLEditorInput implements IEditorInput, MagicFactory {
+public class ExampleContext implements IEditorInput, MagicFactory {
 
 	private Object element;
 
-	public REPLEditorInput(Object element) {
+	public ExampleContext(Object element) {
 		this.element = element;
 	}
 
@@ -54,6 +57,21 @@ public class REPLEditorInput implements IEditorInput, MagicFactory {
 			return new DebuggerMagic(project);
 		}
 		return null;
+	}
+
+	public IJavaProject getJavaProject() {
+		if (!(element instanceof IJavaElement)) return null;
+		return ((IJavaElement) element).getJavaProject();
+	}
+
+	public ICompilationUnit getCompilationUnit() {
+		if (!(element instanceof IMember)) return null;
+		return ((IMember) element).getCompilationUnit();
+	}
+
+	public IMethod getExampleMethod() {
+		if (!(element instanceof IMethod)) return null;
+		return ((IMethod) element);
 	}
 
 }

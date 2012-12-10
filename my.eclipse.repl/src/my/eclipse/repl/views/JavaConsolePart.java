@@ -47,7 +47,7 @@ public class JavaConsolePart {
 		viewer = new ConsoleViewer(parent);
 		InputStream in = viewer.getInputStream();
 		OutputStream out = viewer.getOutputStream();
-		repl = new ReadEvaluatePrintLoop(factory.makeMagic(), in, out, out);
+		repl = new ReadEvaluatePrintLoop(factory, in, out, out);
 		configureViewer(viewer, repl);
 		repl.asJob().schedule();
 	}
@@ -109,6 +109,14 @@ public class JavaConsolePart {
 				return repl.getContentAssitentProvide();
 			}
 		});
+	}
+
+	public ConsoleViewer getViewer() {
+		return viewer;
+	}
+
+	public ReadEvaluatePrintLoop getREPL() {
+		return repl;
 	}
 
 }
