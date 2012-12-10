@@ -52,6 +52,8 @@ public class DebuggerMagic {
 	private Launch launch;
 	private MyEvaluationEngine eval;
 
+	private Result result;
+
 	public DebuggerMagic(IJavaProject project) {
 		this.project = project;
 	}
@@ -61,7 +63,6 @@ public class DebuggerMagic {
 	}
 
 	private void initializeMagic() throws Exception {
-
 		IVMInstall vmInstall = JavaRuntime.getVMInstall(project);
 		if (vmInstall == null) vmInstall = JavaRuntime.getDefaultVMInstall();
 		if (vmInstall == null) return;
@@ -138,32 +139,37 @@ public class DebuggerMagic {
 		return bp;
 	}
 
-	public String evaluate(String expression) {
-		if (eval == null) try {
-			initializeMagic();
-		} catch (Exception exception) {
-			throw new BullshitFree(exception);
-		}
-		assert expression != null;
-		if (IMPORT.matcher(expression).matches()) {
-			eval.imports.add(expression);
-			StringBuilder buf = new StringBuilder();
-			for (String each: eval.imports) {
-				buf.append(each);
-				buf.append('\n');
-			}
-			return buf.toString();
-		}
+	public Result evaluate(String expression) {
 		try {
-			return evaluateStuff(expression);
+			if (eval == null) initializeMagic();
+			result = new Result(expression);
+			result.print = evaluate0(expression);
+			return result;
 		} catch (Exception exception) {
 			throw new BullshitFree(exception);
 		}
 	}
 
+	private String evaluate0(String expression) throws Exception {
+		if (IMPORT.matcher(expression).matches()) return evaluateImport(expression);
+		return evaluateExpression(expression);
+	}
+
+	private String evaluateImport(String expression) {
+		result.kind = "import";
+		eval.imports.add(expression);
+		StringBuilder buf = new StringBuilder();
+		for (String each: eval.imports) {
+			buf.append(each);
+			buf.append('\n');
+		}
+		return buf.toString();
+	}
+
 	private static Pattern IMPORT = Pattern.compile("import\\s+(static\\s+)?\\w+(\\.\\w+)*(\\.\\*)?;");
 
-	private String evaluateStuff(String expression) throws DebugException, InterruptedException {
+	private String evaluateExpression(String expression) throws DebugException, InterruptedException {
+		result.kind = "expression";
 		IJavaStackFrame frame = (IJavaStackFrame) getSuspendedThread().getTopStackFrame();
 		Promise result = new Promise(IEvaluationListener.class);
 		eval.evaluateExpression(expression, frame, (IEvaluationListener) result.callback());
@@ -172,22 +178,21 @@ public class DebuggerMagic {
 
 	private String printEvaluationResult(MyEvaluationResult result) throws DebugException, InterruptedException {
 		if (result.hasErrors()) return printEvaluationErrors(result);
-
 		IJavaValue value = result.getValue();
 		JavaDetailFormattersManager man = JavaDetailFormattersManager.getDefault();
-
 		Promise detail = new Promise(IValueDetailListener.class);
 		man.computeValueDetail(value, getSuspendedThread(), (IValueDetailListener) detail.callback());
 		return (String) detail.await()[1];
 	}
 
-	private String printEvaluationErrors(MyEvaluationResult result) {
+	private String printEvaluationErrors(MyEvaluationResult value) {
+		result.kind = "error";
 		StringBuilder buf = new StringBuilder();
-		for (String each: result.getErrorMessages()) {
+		for (String each: value.getErrorMessages()) {
 			buf.append(each);
 			buf.append('\n');
 		}
-		DebugException exception = result.getException();
+		DebugException exception = value.getException();
 		if (exception != null) {
 			buf.append(exception.getMessage());
 			buf.append('\n');

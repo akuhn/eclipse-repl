@@ -3,10 +3,8 @@ package my.eclipse.repl.views;
 import my.eclipse.repl.eval.DebuggerMagic;
 import my.eclipse.repl.eval.MagicFactory;
 
-import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.IJavaElement;
 import org.eclipse.jdt.core.IJavaProject;
-import org.eclipse.jdt.core.IMember;
 import org.eclipse.jdt.core.IMethod;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ui.IEditorInput;
@@ -62,11 +60,6 @@ public class ExampleContext implements IEditorInput, MagicFactory {
 	public IJavaProject getJavaProject() {
 		if (!(element instanceof IJavaElement)) return null;
 		return ((IJavaElement) element).getJavaProject();
-	}
-
-	public ICompilationUnit getCompilationUnit() {
-		if (!(element instanceof IMember)) return null;
-		return ((IMember) element).getCompilationUnit();
 	}
 
 	public IMethod getExampleMethod() {

@@ -40,10 +40,10 @@ public final class ReadEvaluatePrintLoop {
 			out.print(">> ");
 			String line = new BufferedReader(new InputStreamReader(in)).readLine();
 			history.add(line);
-			String result = magic.evaluate(line);
+			Result result = magic.evaluate(line);
 			out.print("=> ");
-			out.println(result);
-			notifyListeners(line, result);
+			out.println(result.toPrintString());
+			notifyListeners(result);
 		} catch (IOException ex) {
 			// ASSUME input stream just closed
 		}
@@ -110,10 +110,10 @@ public final class ReadEvaluatePrintLoop {
 		listeners.remove(listener);
 	}
 
-	private void notifyListeners(String expression, String result) {
+	private void notifyListeners(Result event) {
 		if (listeners == null) return;
 		for (Object each: listeners.getListeners()) {
-			((EvaluationListener) each).notify(expression, result);
+			((EvaluationListener) each).notify(event);
 		}
 	}
 

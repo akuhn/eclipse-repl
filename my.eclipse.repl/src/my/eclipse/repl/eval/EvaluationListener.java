@@ -2,6 +2,6 @@ package my.eclipse.repl.eval;
 
 public interface EvaluationListener {
 
-	public void notify(String expression, String result);
+	public void notify(Result e);
 
 }

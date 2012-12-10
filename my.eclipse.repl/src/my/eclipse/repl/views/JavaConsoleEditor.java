@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import my.eclipse.repl.eval.EvaluationListener;
+import my.eclipse.repl.eval.Result;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.swt.widgets.Composite;
@@ -19,7 +20,7 @@ public class JavaConsoleEditor extends EditorPart {
 	private JavaConsolePart part;
 	private ExampleContext context;
 
-	private List data = new ArrayList();
+	private List<Result> data = new ArrayList();
 	private boolean dirty;
 
 	@Override
@@ -31,12 +32,12 @@ public class JavaConsoleEditor extends EditorPart {
 		part.getREPL().addEvaluationListener(new EvaluationListener() {
 
 			@Override
-			public void notify(String expression, String result) {
+			public void notify(Result result) {
 				if (dirty == false) {
 					dirty = true;
 					firePropertyChange(PROP_DIRTY);
 				}
-				data.add(new String[] { expression, result });
+				data.add(result);
 			}
 		});
 	}
