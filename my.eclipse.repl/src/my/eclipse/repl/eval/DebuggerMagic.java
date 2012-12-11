@@ -69,7 +69,7 @@ public class DebuggerMagic {
 		IVMRunner vmRunner = vmInstall.getVMRunner(ILaunchManager.DEBUG_MODE);
 		if (vmRunner == null) return;
 		String[] classPath = computeCustomClassPath();
-		VMRunnerConfiguration config = new VMRunnerConfiguration(MAIN_CLASS_NAME, classPath);
+		VMRunnerConfiguration config = new VMRunnerConfiguration(getMainClassName(), classPath);
 		launch = new Launch(null, ILaunchManager.DEBUG_MODE, null);
 
 		// TODO figure out which attributes and stuff in launch we're missing
@@ -78,6 +78,7 @@ public class DebuggerMagic {
 		DebugPlugin.getDefault().getLaunchManager().addLaunch(launch);
 
 		IJavaMethodBreakpoint bp = createMagicBreakpoint();
+		config.setProgramArguments(getArguments());
 		vmRunner.run(config, launch, null);
 
 		// TODO capture output from launch's process here
@@ -90,6 +91,10 @@ public class DebuggerMagic {
 		launch.getDebugTarget().breakpointAdded(bp);
 		IJavaDebugTarget target = (IJavaDebugTarget) launch.getDebugTarget();
 		eval = new MyEvaluationEngine(project, target);
+	}
+
+	protected String getMainClassName() {
+		return MAIN_CLASS_NAME;
 	}
 
 	private String[] computeCustomClassPath() {
@@ -120,23 +125,32 @@ public class DebuggerMagic {
 
 	CountDownLatch isSuspended = new CountDownLatch(1);
 
-	private IJavaMethodBreakpoint createMagicBreakpoint() throws CoreException {
+	protected IJavaMethodBreakpoint createMagicBreakpoint() throws CoreException {
+		String[] location = getBreakpointLocation();
+		boolean onExit = isBreakinOnMethodExit();
 		IJavaMethodBreakpoint bp = new JavaMethodBreakpoint( //
 				ResourcesPlugin.getWorkspace().getRoot(), //
-				MAIN_CLASS_NAME, "main", "([Ljava/lang/String;)V", //
-				true, false, false, -1, -1, -1, 1, false, //
+				location[0], location[1], location[2], //
+				!onExit, onExit, false, -1, -1, -1, 1, false, //
 				new HashMap()) {
 			@Override
 			public boolean handleBreakpointEvent(Event event, JDIThread thread, boolean suspendVote) {
-				try {
-					return super.handleBreakpointEvent(event, thread, suspendVote);
-				} finally {
-					isSuspended.countDown();
-				}
+				boolean ignored = false;
+				ignored = super.handleBreakpointEvent(event, thread, suspendVote);
+				if (!ignored) isSuspended.countDown();
+				return ignored;
 			}
 		};
 		bp.setPersisted(false);
 		return bp;
+	}
+
+	protected boolean isBreakinOnMethodExit() {
+		return false;
+	}
+
+	protected String[] getBreakpointLocation() {
+		return new String[] { getMainClassName(), "main", "([Ljava/lang/String;)V" };
 	}
 
 	public Result evaluate(String expression) {
@@ -211,6 +225,10 @@ public class DebuggerMagic {
 
 	public MyContentAssistProcessor getContentAssistProcessor() {
 		return new MyContentAssistProcessor(project);
+	}
+
+	protected String[] getArguments() {
+		return new String[0];
 	}
 
 }

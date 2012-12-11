@@ -50,6 +50,7 @@ public class ExampleContext implements IEditorInput, MagicFactory {
 
 	@Override
 	public DebuggerMagic makeMagic() {
+		if (element instanceof IMethod) { return new ExampleRunner((IMethod) element); }
 		if (element instanceof IJavaElement) {
 			IJavaProject project = ((IJavaElement) element).getJavaProject();
 			return new DebuggerMagic(project);

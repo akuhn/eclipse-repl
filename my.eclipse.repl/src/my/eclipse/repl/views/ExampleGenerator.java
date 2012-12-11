@@ -32,7 +32,12 @@ public class ExampleGenerator {
 
 			StringBuilder buf = new StringBuilder();
 			buf.append("\t@Test\n");
-			buf.append("\tpublic void shouldDoStuff() {\n");
+			buf.append("\tpublic void " + summarizeTest(data) + " {\n");
+			if (method != null) {
+				buf.append("\t\t");
+				buf.append(method.getElementName());
+				buf.append("();\n");
+			}
 			buf.append("\t\tObject _;\n");
 			for (Result each: data) {
 				if (each.hasErrors()) continue;
@@ -57,6 +62,10 @@ public class ExampleGenerator {
 		} catch (CoreException exception) {
 			throw new BullshitFree(exception);
 		}
+	}
+
+	private String summarizeTest(List<Result> data) {
+		return "should" + System.currentTimeMillis();
 	}
 
 	private IType declaringType(IJavaProject project, IMethod method) throws JavaModelException {
