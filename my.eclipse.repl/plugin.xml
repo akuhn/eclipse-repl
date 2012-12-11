@@ -37,7 +37,7 @@
                id="my.eclipse.repl.toolbars.sampleToolbar">
             <command
                   commandId="my.eclipse.repl.commands.openJavaREPL"
-                  icon="icons/sample.gif"
+                  icon="icons/console.gif"
                   id="my.eclipse.repl.toolbars.sampleCommand"
                   tooltip="Open Java REPL">
             </command>
@@ -53,14 +53,14 @@
       <view
             category="my.eclipse.repl"
             class="my.eclipse.repl.views.JavaConsoleView"
-            icon="icons/sample.gif"
+            icon="icons/console.gif"
             id="my.eclipse.repl.views.JavaREPL"
             name="Java REPL">
       </view>
       <view
             category="my.eclipse.repl"
             class="my.eclipse.repl.views.ExampleView"
-            icon="icons/sample.gif"
+            icon="icons/example.gif"
             id="my.eclipse.repl.views.ExampleView"
             name="Example View">
       </view>
@@ -92,7 +92,7 @@
             class="my.eclipse.repl.views.JavaConsoleEditor"
             contributorClass="org.eclipse.ui.texteditor.BasicTextEditorActionContributor"
             extensions=""
-            icon="icons/sample.gif"
+            icon="icons/console.gif"
             id="my.eclipse.repl.editors.JavaConsoleEditor"
             name="Java REPL as Editor">
       </editor>
