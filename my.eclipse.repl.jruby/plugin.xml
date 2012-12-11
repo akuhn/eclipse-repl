@@ -12,20 +12,8 @@
             class="my.eclipse.repl.jruby.views.RubyConsoleView"
             icon="icons/sample.gif"
             id="my.eclipse.repl.jruby.views.SampleView"
-            name="Jruby REPL">
+            name="Eclipse REPL (using JRuby)">
       </view>
-   </extension>
-   <extension
-         point="org.eclipse.ui.perspectiveExtensions">
-      <perspectiveExtension
-            targetID="org.eclipse.jdt.ui.JavaPerspective">
-         <view
-               id="my.eclipse.repl.jruby.views.SampleView"
-               ratio="0.5"
-               relationship="stack"
-               relative="org.eclipse.ui.views.ProblemView">
-         </view>
-      </perspectiveExtension>
    </extension>
    <extension
          point="org.eclipse.ui.commands">
@@ -42,12 +30,25 @@
    <extension
          point="org.eclipse.ui.handlers">
       <handler
-            class="my.eclipse.repl.jruby.handlers.SampleHandler"
+            class="my.eclipse.repl.jruby.handlers.OpenEclipseJRubyREPLHandler"
             commandId="my.eclipse.repl.jruby.commands.sampleCommand">
       </handler>
    </extension>
    <extension
          point="org.eclipse.ui.menus">
+      <menuContribution
+            locationURI="menu:org.eclipse.ui.main.menu?after=additions">
+         <menu
+               id="my.eclipse.repl.jruby.menus.sampleMenu"
+               label="Sample Menu"
+               mnemonic="M">
+            <command
+                  commandId="my.eclipse.repl.jruby.commands.sampleCommand"
+                  id="my.eclipse.repl.jruby.menus.sampleCommand"
+                  mnemonic="S">
+            </command>
+         </menu>
+      </menuContribution>
       <menuContribution
             locationURI="toolbar:org.eclipse.ui.main.toolbar?after=additions">
          <toolbar
