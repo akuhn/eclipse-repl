@@ -15,7 +15,7 @@ import org.eclipse.ui.console.IConsoleManager;
 import org.eclipse.ui.console.MessageConsole;
 import org.jruby.embed.ScriptingContainer;
 
-public class SampleHandler extends AbstractHandler {
+public class RunScriptHandler extends AbstractHandler {
 
 	private MessageConsole findConsole(String name) {
 		IConsoleManager man = ConsolePlugin.getDefault().getConsoleManager();

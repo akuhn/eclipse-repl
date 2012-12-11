@@ -3,9 +3,12 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Java REPL
 Bundle-SymbolicName: my.eclipse.repl;singleton:=true
 Bundle-Version: 1.0.0.qualifier
-Bundle-Activator: my.eclipse.repl.Activator
+Bundle-Activator: my.eclipse.repl.Plugin
 Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.ui,
+ org.eclipse.ui.console,
+ org.eclipse.ui.editors,
+ org.eclipse.ui.ide,
  org.eclipse.debug.core,
  org.eclipse.debug.ui,
  org.eclipse.jdt.core,
@@ -14,8 +17,7 @@ Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.jdt.launching,
  org.eclipse.jdt.ui,
  org.eclipse.jface.text,
- org.eclipse.pde.ui,
- org.eclipse.ui.console,
- org.eclipse.ui.editors
+ org.eclipse.pde.ui
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Export-Package: my.eclipse.repl

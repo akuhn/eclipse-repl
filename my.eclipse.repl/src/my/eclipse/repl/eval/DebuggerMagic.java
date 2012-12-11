@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.regex.Pattern;
 
-import my.eclipse.repl.Activator;
+import my.eclipse.repl.Plugin;
 import my.eclipse.repl.util.BullshitFree;
 import my.eclipse.repl.util.Promise;
 import my.eclipse.repl.util.StringList;
@@ -47,27 +47,40 @@ public class DebuggerMagic {
 
 	private static final String MAIN_CLASS_NAME = "my.eclipse.repl.eval.MacGuffin";
 
-	private IJavaProject myJavaProject;
+	private IJavaProject project;
 	private Launch launch;
 	private MyEvaluationEngine eval;
 
+	private Result result;
+
+	public DebuggerMagic(IJavaProject project) {
+		this.project = project;
+	}
+
 	public DebuggerMagic() {
-		myJavaProject = anyJavaProject();
+		this(anyJavaProject());
 	}
 
 	private void initializeMagic() throws Exception {
-
-		IVMInstall vmInstall = JavaRuntime.getVMInstall(myJavaProject);
+		IVMInstall vmInstall = JavaRuntime.getVMInstall(project);
 		if (vmInstall == null) vmInstall = JavaRuntime.getDefaultVMInstall();
 		if (vmInstall == null) return;
 		IVMRunner vmRunner = vmInstall.getVMRunner(ILaunchManager.DEBUG_MODE);
 		if (vmRunner == null) return;
 		String[] classPath = computeCustomClassPath();
-		VMRunnerConfiguration config = new VMRunnerConfiguration(MAIN_CLASS_NAME, classPath);
+		VMRunnerConfiguration config = new VMRunnerConfiguration(getMainClassName(), classPath);
 		launch = new Launch(null, ILaunchManager.DEBUG_MODE, null);
 
+		// TODO figure out which attributes and stuff in launch we're missing
+		// for correct display in the debugger's launch view!
+		//
+		// DebugPlugin.getDefault().getLaunchManager().addLaunch(launch);
+
 		IJavaMethodBreakpoint bp = createMagicBreakpoint();
+		config.setProgramArguments(getArguments());
 		vmRunner.run(config, launch, null);
+
+		// TODO capture output from launch's process here
 
 		// XXX Apparently we have to rely on the fact that things
 		// are slow and set the breakpoint after the configuration
@@ -76,18 +89,22 @@ public class DebuggerMagic {
 
 		launch.getDebugTarget().breakpointAdded(bp);
 		IJavaDebugTarget target = (IJavaDebugTarget) launch.getDebugTarget();
-		eval = new MyEvaluationEngine(myJavaProject, target);
+		eval = new MyEvaluationEngine(project, target);
+	}
+
+	protected String getMainClassName() {
+		return MAIN_CLASS_NAME;
 	}
 
 	private String[] computeCustomClassPath() {
 		StringList path = new StringList();
 		try {
-			path.add(JavaRuntime.computeDefaultRuntimeClassPath(myJavaProject));
+			path.add(JavaRuntime.computeDefaultRuntimeClassPath(project));
 		} catch (CoreException exception) {
 			throw new BullshitFree(exception);
 		}
 		try {
-			URL entry = Activator.getContext().getBundle().getEntry("bin");
+			URL entry = Plugin.getContext().getBundle().getEntry("bin");
 			String string = FileLocator.toFileURL(entry).getFile();
 			path.add(string);
 		} catch (IOException exception) {
@@ -96,7 +113,7 @@ public class DebuggerMagic {
 		return path.asArray();
 	}
 
-	private IJavaProject anyJavaProject() {
+	private static IJavaProject anyJavaProject() {
 		for (IProject each: ResourcesPlugin.getWorkspace().getRoot().getProjects()) {
 			if (!each.isOpen()) continue;
 			IJavaProject p = JavaCore.create(each);
@@ -107,51 +124,65 @@ public class DebuggerMagic {
 
 	CountDownLatch isSuspended = new CountDownLatch(1);
 
-	private IJavaMethodBreakpoint createMagicBreakpoint() throws CoreException {
+	protected IJavaMethodBreakpoint createMagicBreakpoint() throws CoreException {
+		String[] location = getBreakpointLocation();
+		boolean onExit = isBreakinOnMethodExit();
 		IJavaMethodBreakpoint bp = new JavaMethodBreakpoint( //
 				ResourcesPlugin.getWorkspace().getRoot(), //
-				MAIN_CLASS_NAME, "main", "([Ljava/lang/String;)V", //
-				true, false, false, -1, -1, -1, 1, false, //
+				location[0], location[1], location[2], //
+				!onExit, onExit, false, -1, -1, -1, 1, false, //
 				new HashMap()) {
 			@Override
 			public boolean handleBreakpointEvent(Event event, JDIThread thread, boolean suspendVote) {
-				try {
-					return super.handleBreakpointEvent(event, thread, suspendVote);
-				} finally {
-					isSuspended.countDown();
-				}
+				boolean ignored = false;
+				ignored = super.handleBreakpointEvent(event, thread, suspendVote);
+				if (!ignored) isSuspended.countDown();
+				return ignored;
 			}
 		};
 		bp.setPersisted(false);
 		return bp;
 	}
 
-	public String evaluate(String expression) {
-		if (eval == null) try {
-			initializeMagic();
-		} catch (Exception exception) {
-			throw new BullshitFree(exception);
-		}
-		assert expression != null;
-		if (IMPORT.matcher(expression).matches()) {
-			eval.imports.add(expression);
-			StringBuilder buf = new StringBuilder();
-			for (String each: eval.imports) {
-				buf.append(each);
-				buf.append('\n');
-			}
-			return buf.toString();
-		}
+	protected boolean isBreakinOnMethodExit() {
+		return false;
+	}
+
+	protected String[] getBreakpointLocation() {
+		return new String[] { getMainClassName(), "main", "([Ljava/lang/String;)V" };
+	}
+
+	public Result evaluate(String expression) {
 		try {
-			return evaluateStuff(expression);
+			if (eval == null) initializeMagic();
+			result = new Result(expression);
+			result.print = evaluate0(expression);
+			return result;
 		} catch (Exception exception) {
 			throw new BullshitFree(exception);
 		}
 	}
 
+	private String evaluate0(String expression) throws Exception {
+		if (IMPORT.matcher(expression).matches()) return evaluateImport(expression);
+		return evaluateExpression(expression);
+	}
+
+	private String evaluateImport(String expression) {
+		result.kind = "import";
+		eval.imports.add(expression);
+		StringBuilder buf = new StringBuilder();
+		for (String each: eval.imports) {
+			buf.append(each);
+			buf.append('\n');
+		}
+		return buf.toString();
+	}
+
 	private static Pattern IMPORT = Pattern.compile("import\\s+(static\\s+)?\\w+(\\.\\w+)*(\\.\\*)?;");
 
-	private String evaluateStuff(String expression) throws DebugException, InterruptedException {
+	private String evaluateExpression(String expression) throws DebugException, InterruptedException {
+		result.kind = "expression";
 		IJavaStackFrame frame = (IJavaStackFrame) getSuspendedThread().getTopStackFrame();
 		Promise result = new Promise(IEvaluationListener.class);
 		eval.evaluateExpression(expression, frame, (IEvaluationListener) result.callback());
@@ -160,22 +191,21 @@ public class DebuggerMagic {
 
 	private String printEvaluationResult(MyEvaluationResult result) throws DebugException, InterruptedException {
 		if (result.hasErrors()) return printEvaluationErrors(result);
-
 		IJavaValue value = result.getValue();
 		JavaDetailFormattersManager man = JavaDetailFormattersManager.getDefault();
-
 		Promise detail = new Promise(IValueDetailListener.class);
 		man.computeValueDetail(value, getSuspendedThread(), (IValueDetailListener) detail.callback());
 		return (String) detail.await()[1];
 	}
 
-	private String printEvaluationErrors(MyEvaluationResult result) {
+	private String printEvaluationErrors(MyEvaluationResult value) {
+		result.kind = "error";
 		StringBuilder buf = new StringBuilder();
-		for (String each: result.getErrorMessages()) {
+		for (String each: value.getErrorMessages()) {
 			buf.append(each);
 			buf.append('\n');
 		}
-		DebugException exception = result.getException();
+		DebugException exception = value.getException();
 		if (exception != null) {
 			buf.append(exception.getMessage());
 			buf.append('\n');
@@ -193,7 +223,11 @@ public class DebuggerMagic {
 	}
 
 	public MyContentAssistProcessor getContentAssistProcessor() {
-		return new MyContentAssistProcessor(myJavaProject);
+		return new MyContentAssistProcessor(project);
+	}
+
+	protected String[] getArguments() {
+		return new String[0];
 	}
 
 }

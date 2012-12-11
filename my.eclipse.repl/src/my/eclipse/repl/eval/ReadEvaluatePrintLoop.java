@@ -11,9 +11,11 @@ import java.util.List;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.text.contentassist.IContentAssistProcessor;
+import org.eclipse.ui.progress.UIJob;
 
 public final class ReadEvaluatePrintLoop {
 
@@ -24,10 +26,14 @@ public final class ReadEvaluatePrintLoop {
 	private PrintStream out;
 
 	public ReadEvaluatePrintLoop(InputStream in, OutputStream out, OutputStream err) {
+		this(null, in, out, err);
+	}
+
+	public ReadEvaluatePrintLoop(MagicFactory factory, InputStream in, OutputStream out, OutputStream err) {
 		this.in = in;
 		this.out = new PrintStream(out);
 		this.history = new History();
-		this.magic = new DebuggerMagic();
+		this.magic = factory == null ? new DebuggerMagic() : factory.makeMagic();
 	}
 
 	public void readEvaluatePrint() {
@@ -35,9 +41,10 @@ public final class ReadEvaluatePrintLoop {
 			out.print(">> ");
 			String line = new BufferedReader(new InputStreamReader(in)).readLine();
 			history.add(line);
-			String result = magic.evaluate(line);
+			Result result = magic.evaluate(line);
 			out.print("=> ");
-			out.println(result);
+			out.println(result.toPrintString());
+			notifyListeners(result);
 		} catch (IOException ex) {
 			// ASSUME input stream just closed
 		}
@@ -90,6 +97,31 @@ public final class ReadEvaluatePrintLoop {
 
 	public IContentAssistProcessor getContentAssitentProvide() {
 		return magic.getContentAssistProcessor();
+	}
+
+	private ListenerList listeners;
+
+	public void addEvaluationListener(EvaluationListener listener) {
+		if (listeners == null) listeners = new ListenerList();
+		listeners.add(listener);
+	}
+
+	public void removeEvaluationListener(EvaluationListener listener) {
+		if (listeners == null) return;
+		listeners.remove(listener);
+	}
+
+	private void notifyListeners(final Result event) {
+		if (listeners == null) return;
+		new UIJob("") {
+			@Override
+			public IStatus runInUIThread(IProgressMonitor monitor) {
+				for (Object each: listeners.getListeners()) {
+					((EvaluationListener) each).notify(event);
+				}
+				return Status.OK_STATUS;
+			}
+		};
 	}
 
 }

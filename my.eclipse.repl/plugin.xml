@@ -37,7 +37,7 @@
                id="my.eclipse.repl.toolbars.sampleToolbar">
             <command
                   commandId="my.eclipse.repl.commands.openJavaREPL"
-                  icon="icons/sample.gif"
+                  icon="icons/console.gif"
                   id="my.eclipse.repl.toolbars.sampleCommand"
                   tooltip="Open Java REPL">
             </command>
@@ -53,9 +53,16 @@
       <view
             category="my.eclipse.repl"
             class="my.eclipse.repl.views.JavaConsoleView"
-            icon="icons/sample.gif"
+            icon="icons/console.gif"
             id="my.eclipse.repl.views.JavaREPL"
             name="Java REPL">
+      </view>
+      <view
+            category="my.eclipse.repl"
+            class="my.eclipse.repl.views.ExampleView"
+            icon="icons/example.gif"
+            id="my.eclipse.repl.views.ExampleView"
+            name="Example View">
       </view>
    </extension>
    <extension
@@ -69,6 +76,26 @@
                relative="org.eclipse.ui.editorss">
          </view>
       </perspectiveExtension>
+      <perspectiveExtension
+            targetID="org.eclipse.jdt.ui.JavaPerspective">
+         <view
+               id="my.eclipse.repl.views.ExampleView"
+               ratio="0.5"
+               relationship="right"
+               relative="org.eclipse.ui.views.ProblemView">
+         </view>
+      </perspectiveExtension>
+   </extension>
+   <extension
+         point="org.eclipse.ui.editors">
+      <editor
+            class="my.eclipse.repl.views.JavaConsoleEditor"
+            contributorClass="org.eclipse.ui.texteditor.BasicTextEditorActionContributor"
+            extensions=""
+            icon="icons/console.gif"
+            id="my.eclipse.repl.editors.JavaConsoleEditor"
+            name="Java REPL as Editor">
+      </editor>
    </extension>
 
 </plugin>
