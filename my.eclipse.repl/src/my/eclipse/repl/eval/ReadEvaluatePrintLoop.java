@@ -15,6 +15,7 @@ import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.text.contentassist.IContentAssistProcessor;
+import org.eclipse.ui.progress.UIJob;
 
 public final class ReadEvaluatePrintLoop {
 
@@ -110,11 +111,17 @@ public final class ReadEvaluatePrintLoop {
 		listeners.remove(listener);
 	}
 
-	private void notifyListeners(Result event) {
+	private void notifyListeners(final Result event) {
 		if (listeners == null) return;
-		for (Object each: listeners.getListeners()) {
-			((EvaluationListener) each).notify(event);
-		}
+		new UIJob("") {
+			@Override
+			public IStatus runInUIThread(IProgressMonitor monitor) {
+				for (Object each: listeners.getListeners()) {
+					((EvaluationListener) each).notify(event);
+				}
+				return Status.OK_STATUS;
+			}
+		};
 	}
 
 }

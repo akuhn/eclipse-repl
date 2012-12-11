@@ -16,7 +16,6 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.debug.core.DebugException;
-import org.eclipse.debug.core.DebugPlugin;
 import org.eclipse.debug.core.ILaunchManager;
 import org.eclipse.debug.core.Launch;
 import org.eclipse.debug.core.model.IThread;
@@ -74,8 +73,8 @@ public class DebuggerMagic {
 
 		// TODO figure out which attributes and stuff in launch we're missing
 		// for correct display in the debugger's launch view!
-
-		DebugPlugin.getDefault().getLaunchManager().addLaunch(launch);
+		//
+		// DebugPlugin.getDefault().getLaunchManager().addLaunch(launch);
 
 		IJavaMethodBreakpoint bp = createMagicBreakpoint();
 		config.setProgramArguments(getArguments());
