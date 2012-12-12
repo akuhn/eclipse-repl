@@ -113,7 +113,7 @@ public final class ReadEvaluatePrintLoop {
 
 	private void notifyListeners(final Result event) {
 		if (listeners == null) return;
-		new UIJob("") {
+		(new UIJob("") {
 			@Override
 			public IStatus runInUIThread(IProgressMonitor monitor) {
 				for (Object each: listeners.getListeners()) {
@@ -121,7 +121,7 @@ public final class ReadEvaluatePrintLoop {
 				}
 				return Status.OK_STATUS;
 			}
-		};
+		}).schedule();
 	}
 
 }
