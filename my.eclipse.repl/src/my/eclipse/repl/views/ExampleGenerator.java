@@ -32,7 +32,7 @@ public class ExampleGenerator {
 
 			StringBuilder buf = new StringBuilder();
 			buf.append("\t@Test\n");
-			buf.append("\tpublic void " + summarizeTest(data) + " {\n");
+			buf.append("\tpublic void " + summarizeTest(data) + "() {\n");
 			if (method != null) {
 				buf.append("\t\t");
 				buf.append(method.getElementName());
