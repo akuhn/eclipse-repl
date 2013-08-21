@@ -32,8 +32,8 @@ public class MyEvaluationSourceGenerator extends EvaluationSourceGenerator {
 	}
 
 	@Override
-	public String getSource(IJavaReferenceType type, IJavaProject javaProject, boolean isStatic) throws CoreException {
-		String source = super.getSource(type, javaProject, isStatic);
+	public String getSource(IJavaReferenceType type, int line, IJavaProject javaProject, boolean isStatic) throws CoreException {
+		String source = super.getSource(type, line, javaProject, isStatic);
 		StringBuilder buf = new StringBuilder();
 		for (String each: imports) {
 			buf.append('\n');

@@ -17,7 +17,8 @@ Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.jdt.launching,
  org.eclipse.jdt.ui,
  org.eclipse.jface.text,
- org.eclipse.pde.ui
+ org.eclipse.pde.ui,
+ org.junit
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: my.eclipse.repl
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7

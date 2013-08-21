@@ -95,7 +95,7 @@ public class MyEvaluationEngine implements IEvaluationEngine {
 			mapper = new MyEvaluationSourceGenerator(locals[0], locals[1], snippet);
 			mapper.imports = this.imports;
 			IJavaReferenceType receivingType = frame.getReferenceType();
-			String source = mapper.getSource(receivingType, javaProject, frame.isStatic());
+			String source = mapper.getSource(receivingType, 0, javaProject, frame.isStatic());
 			unit = parseCompilationUnit(source.toCharArray(), mapper.getCompilationUnitName(), javaProject);
 		} catch (CoreException e) {
 			InstructionSequence expression = new InstructionSequence(snippet);

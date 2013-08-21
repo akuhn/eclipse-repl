@@ -1,7 +1,7 @@
 package my.eclipse.repl.views;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.io.StringBufferInputStream;
 
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.CoreException;
@@ -49,7 +49,7 @@ public class StringEditorInput implements IStorageEditorInput {
 
 	private final class MyStorage implements IStorage {
 		public InputStream getContents() throws CoreException {
-			return new StringBufferInputStream(inputString);
+			return new ByteArrayInputStream(inputString.getBytes());
 		}
 
 		public IPath getFullPath() {
