@@ -52,7 +52,7 @@ public class ExampleGenerator {
 			String source = buf.toString();
 
 			ImportRewrite rewrite = CodeStyleConfiguration.createImportRewrite(type.getCompilationUnit(), true);
-			rewrite.addImport("junit.org.Test");
+			rewrite.addImport("org.junit.Test");
 			rewrite.addStaticImport("org.junit.Assert", "assertEquals", false);
 			TextEdit edit = rewrite.rewriteImports(null);
 			type.getCompilationUnit().applyTextEdit(edit, null);
