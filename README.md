@@ -1,5 +1,5 @@
 Adds a view with a Java read-evaluate-print-loop to Eclipse. 
 
-Work in progress, stay tuned!
+The main REPL loop is here [ReadEvaluatePrintLoop.java](https://github.com/akuhn/eclipse-repl/blob/master/my.eclipse.repl/src/my/eclipse/repl/eval/ReadEvaluatePrintLoop.java)
 
--- [Adrian](http://twitter.com/akuhn)
+Work in progress, stay tuned...
