@@ -51,7 +51,7 @@ public final class ReadEvaluatePrintLoop {
 	}
 
 	public Job asJob() {
-		Job job = new Job("JRuby REPL") {
+		Job job = new Job("Eclipse REPL") {
 			@Override
 			public IStatus run(IProgressMonitor monitor) {
 				while (!monitor.isCanceled()) {
